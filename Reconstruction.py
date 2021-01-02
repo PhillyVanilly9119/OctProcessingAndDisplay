@@ -12,6 +12,13 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+##############
+### MACROS ###
+##############
+def reshape_data_after_dims(data) :
+    # Rethink abstract logic
+    pass 
+
 ################
 ### DATA I/O ###
 ################
@@ -46,11 +53,18 @@ def apply_fft(data) :
     pass
 
 def apply_cropped_fft(data, ratio=0.5) :
-    pass
+    shape = np.shape(data)
+    aLen = shape[2]
+    out_data = np.zeros_like(data, dtype=np.uint16)
 
 ##########################
 ### POST-FFT FUNCTIONS ###
 ##########################
+def abs_and_log(data) :
+    out_data = np.zeros_like(data)
+    # Continue here
+    out_data = np.asarray(20 * np.log10(data), dtype=np.uint16)
+
 def rescale_grey_values(data, black_lvl, scale_factor) :
     shape = np.shape(data)
     aLen = shape[2]
