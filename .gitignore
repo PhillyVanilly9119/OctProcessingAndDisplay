@@ -1,0 +1,51 @@
+# Prerequisites
+.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+*.pyc
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# UI files from Qt-Designer
+*.ui
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+*.bat
+
+# Path with executables python files
+!__pychache__.
+**/Backend/__Pycache__/
+**/Frontend/__Pycache__/
+
+# Data Files
+*.xls
+*.pptx
+*.png
+*.jpg
+*.tiff
+*.tif
+*.bmp
