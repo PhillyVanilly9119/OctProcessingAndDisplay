@@ -30,24 +30,6 @@ def reshape_data_after_dims(data, file_name, is_dims_in_file_name=True) :
     print(tuple(dims))
     return np.asarray(data)
 
-################
-### DATA I/O ###
-################
-def load_data_from_bin_file(path, dtype) :
-    pass
-
-def load_data_from_image(path, dims, img_dtype, return_dtype) :
-    pass
-
-def load_data_from_images(path, dims, dtype, return_dtype) :
-    pass
-
-def save_data_as_images(path, data, dims, dtype) :
-    pass
-
-def save_data_as_bin_file(path, data, save_dtype=np.uint8) :
-    pass
-
 #########################
 ### PRE-FFT FUNCTIONS ###
 #########################
