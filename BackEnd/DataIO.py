@@ -60,7 +60,7 @@ def load_data_from_bin_file(path, dtype=np.uint16, dims=None, is_select_path_man
                         ValueError("[COULDN'T LOAD DATA] - received erroneous array!")  
         if is_reshaping_array and oct_buffer is not None :
                 oct_buffer = np.reshape(oct_buffer, (dims))
-        # TODO: Figure out if transposing is neccessary
+        # TODO: Figure out if transposing the array is neccessary
         #         oct_buffer = np.transpose(np.reshape(oct_buffer, (dims[1], dims[0])))
         print(f"Done loading OCT data buffer \nIt took {round(time.time() - t_start, 3)}s to load data \nDimensions of loaded data file are {dims}")
         return np.asarray(oct_buffer, dtype=dtype)
@@ -68,12 +68,13 @@ def load_data_from_bin_file(path, dtype=np.uint16, dims=None, is_select_path_man
 def load_data_from_image(path, dims, img_dtype, return_dtype) :
     pass
 
+def load_data_from_images(path, dims, dtype, return_dtype) :
+    pass
+
 if __name__ == '__main__' :
         path = r'C:\Users\phili\Desktop\recon_100k_data_1536x100000.bin'
         load_data_from_bin_file(path)
 
-# def load_data_from_images(path, dims, dtype, return_dtype) :
-#     pass
 
 # def save_data_as_images(path, data, dims, dtype) :
 #     pass
