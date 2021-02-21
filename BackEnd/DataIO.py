@@ -9,8 +9,10 @@
 
 # proprietary imports
 import os 
+from PIL import Image
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 from tkinter.filedialog import Tk, askopenfilename 
 
 # costom imports
@@ -26,6 +28,17 @@ def tk_file_selection(text) :
         root.destroy()
         return path
 
+def manual_path_selection(flag, text) :  
+        assert (isinstance(flag, bool)), "Parameter is [NOT A BOOLEAN]!"
+        if flag :
+                file_path = tk_file_selection(text)
+        else :
+                file_path = path
+        return file_path 
+
+def get_list_of_only_files(path_main) :
+        return [f for f in os.listdir(path_main) if os.path.isfile(os.path.join(path_main, f))]
+
 ###########################
 ###     DATA I/O        ###
 ###########################
@@ -37,11 +50,7 @@ def load_data_from_bin_file(path, dtype=np.uint16, dims=None, is_select_path_man
         t_start = time.time()
         print("Loading raw data...")  
         # path/file selection
-        if is_select_path_manually :
-                file_path = tk_file_selection('Please select file which contains [OCT RAW DATA]')
-        else :
-                file_path = path
-        assert (os.path.isfile(file_path)), "Selected [FILE DOES NOT EXIST]!" 
+        file_path = manual_path_selection(path, "Please select the file containing the [OCT RAW DATA]")
         # process dimensionality of data
         if is_dims_in_file_name and dims == None :
                 dims_string = path.split('\\')[-1].split('_')[-1].split('.bin')[0].split('x')
@@ -62,19 +71,43 @@ def load_data_from_bin_file(path, dtype=np.uint16, dims=None, is_select_path_man
                 oct_buffer = np.reshape(oct_buffer, (dims))
         # TODO: Figure out if transposing the array is neccessary
         #         oct_buffer = np.transpose(np.reshape(oct_buffer, (dims[1], dims[0])))
-        print(f"Done loading OCT data buffer \nIt took {round(time.time() - t_start, 3)}s to load data \nDimensions of loaded data file are {dims}")
+        print(f"Done loading OCT data buffer")
+        print(f"It took {round(time.time() - t_start, 3)}s to load data") 
+        print(f"Dimensions of loaded data file are {dims}")
         return np.asarray(oct_buffer, dtype=dtype)
 
-def load_data_from_image(path, dims, img_dtype, return_dtype) :
-    pass
+def load_data_from_image(path, dims, return_dtype=np.uint8, is_select_path_manually=True) :
+        """
+        """
+        path_img = manual_path_selection(is_select_path_manually, "Please select image file")
+        try :
+                im = Image.open(path_img).resize(dims)
+        except FileNotFoundError :
+                print(f"The image in {path_img} could not ne found")
+        return np.asarray(im, dtype=return_dtype)
 
-def load_data_from_images(path, dims, dtype, return_dtype) :
-    pass
-
+def load_data_from_images(path_main, dims, return_dtype=np.uint8) :
+        """
+        """
+        file_name_imgs = get_list_of_only_files(path_main)
+        data_from_files = []
+        for n_file in file_name_imgs : 
+                print(n_file)
+                current_file_path = os.path.join(path_main, n_file)
+                print(os.path.isfile(current_file_path))
+        #         break
+        #         # print(current_file_path)
+        #         data_from_files.append(load_data_from_image(current_file_path, 
+        #                                                     dims, 
+        #                                                     is_select_path_manually=False))
+        # return np.asarray(data_from_files, dtype=return_dtype)
+        
 if __name__ == '__main__' :
-        path = r'C:\Users\phili\Desktop\recon_100k_data_1536x100000.bin'
-        load_data_from_bin_file(path)
-
+        # path = r'D:\PhilippData\Tachyoptes\Data\recon_100k_data_1536x100000.bin'
+        path = r'C:\Users\Philipp\Desktop\Test'
+        im = load_data_from_images(path, (250, 150))
+        # plt.imshow(im)
+        # plt.show()
 
 # def save_data_as_images(path, data, dims, dtype) :
 #     pass
