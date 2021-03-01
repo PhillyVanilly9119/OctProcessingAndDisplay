@@ -40,5 +40,8 @@ def writeScanTable2BinFile(table, file_name, path='', is_manual_path_selection=F
     table.astype(dtype).tofile(path_saving)
     
 if __name__ == '__main__' :
-    rasterPattern = createScanPattern(1024, 512, 128)
-    writeScanTable2BinFile(rasterPattern, 'test', is_manual_path_selection=True)
+    bLen = 512
+    cLen = 512
+    flyback = 50
+    rasterPattern = createScanPattern(bLen, cLen, flyback)
+    writeScanTable2BinFile(rasterPattern, f'001_RasterScanMapping_{bLen}_{cLen}_{flyback}', is_manual_path_selection=True)
