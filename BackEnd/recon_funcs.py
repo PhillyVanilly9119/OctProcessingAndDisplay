@@ -1,10 +1,12 @@
 """
-@author:    philipp.matten@meduniwien.ac.at
-            philipp.matten@gmx.de
-
-                                **** 
-       Contains methods and functionality for OCT data reconstruction     
-                                ****
+                                        ******
+        Author: @Philipp Matten - philipp.matten@meduniwien.ac.at / philipp.matten@gmx.de
+                
+                        Copyright 2020 Medical University of Vienna 
+                                        ******
+                                         
+        >>> Contains methods and functionality for OCT data reconstruction     
+                                
 """
 
 # global imports
@@ -209,15 +211,17 @@ def reconstruct(disp_coeffs,
 # TODO: Check handling of return data types
 # TODO: Dispersion Compensation doesnt seem to be working
 
-
-if __name__ == '__main__' :
-        
+def main() :
         file_name = 'C:/Users/Philipp/Desktop/out_before_2048x1024.bin'
         coeffs = (-21,140,0,0)
         path = os.path.join(f"{file_name.split('/')[0]}\\", *file_name.split('/')[1:-1])
         folder = file_name.split('/')[-1]
 
-        data = reconstruct((coeffs), file_name=os.path.join(path, folder))
+        # data = reconstruct((coeffs), file_name=os.path.join(path, folder))
+
+if __name__ == '__main__' :
+        main()
+        
 # =============================================================================
 # data = DataIO.load_data_from_bin(path, folder, is_dim_appendix=True, is_reshaping_array=True)
 # =============================================================================

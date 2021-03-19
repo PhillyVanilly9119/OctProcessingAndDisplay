@@ -30,9 +30,9 @@ def tk_file_selection(text) :
         root.destroy()
         return path
 
-def manual_path_selection(flag, text) :  
-        assert (isinstance(flag, bool)), "Parameter is [NOT A BOOLEAN]!"
-        if flag :
+def manual_path_selection(text, is_select_path_manually) :  
+        assert (isinstance(is_select_path_manually, bool)), "Parameter is [NOT A BOOLEAN]!"
+        if is_select_path_manually :
                 file_path = tk_file_selection(text)
         else :
                 file_path = path
