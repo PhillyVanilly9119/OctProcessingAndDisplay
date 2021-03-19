@@ -7,16 +7,16 @@
                                 ****
 """
 
-# library imports
+# global imports
 import os
 import time
 import numpy as np
 from scipy import signal
 from random import random
 import matplotlib.pyplot as plt
-# proprietary imports
-import DataIO
-import Visualization
+
+# custom imports
+import data_io as DataIO
 
 ### OCT RECONSTRUCTION OPERATIONS ###
 def substract_background(scan, background=None) :
@@ -209,12 +209,15 @@ def reconstruct(disp_coeffs,
 # TODO: Check handling of return data types
 # TODO: Dispersion Compensation doesnt seem to be working
 
-file_name = 'C:/Users/Philipp/Desktop/out_before_2048x1024.bin'
-coeffs = (-21,140,0,0)
-path = os.path.join(f"{file_name.split('/')[0]}\\", *file_name.split('/')[1:-1])
-folder = file_name.split('/')[-1]
 
-data = reconstruct((coeffs), file_name=os.path.join(path, folder))
+if __name__ == '__main__' :
+        
+        file_name = 'C:/Users/Philipp/Desktop/out_before_2048x1024.bin'
+        coeffs = (-21,140,0,0)
+        path = os.path.join(f"{file_name.split('/')[0]}\\", *file_name.split('/')[1:-1])
+        folder = file_name.split('/')[-1]
+
+        data = reconstruct((coeffs), file_name=os.path.join(path, folder))
 # =============================================================================
 # data = DataIO.load_data_from_bin(path, folder, is_dim_appendix=True, is_reshaping_array=True)
 # =============================================================================

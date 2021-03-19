@@ -1,11 +1,9 @@
 """
-
-                File containing functions for FD-domain OCT data reconstruction
-
         Author: @Philipp Matten - philipp.matten@meduniwien.ac.at / philipp.matten@gmx.de
                 
                         Copyright 2020 Medical University of Vienna 
 
+            >>> File containing functions for FD-domain OCT data reconstruction
 """
 
 import os

@@ -6,8 +6,8 @@
        Contains methods and functionality for OCT data visualization     
                                 ****
 """
-import DataIO
 import matplotlib.pyplot as plt
+from OctProcessingAndDisplay.BackEnd import data_io as IO
 
 def plot_aScan(scan) :
         plt.figure()
@@ -16,7 +16,7 @@ def plot_aScan(scan) :
 
 def plot_avged_aScan(scan) :
         plt.figure()
-        plt.plot(DataIO.average_nDim_independent(scan))
+        plt.plot(IO.average_nDim_independent(scan))
         plt.show()
         
 def plot_bScan(scan, cmap='gray'):

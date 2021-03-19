@@ -1,13 +1,15 @@
 """
-@author:    philipp.matten@meduniwien.ac.at
-            philipp.matten@gmx.de
-
-                                        **** 
-       Contains methods and functionality for general OCT data input/output (I/O)     
-                                        ****
+                                        ******
+        Author: @Philipp Matten - philipp.matten@meduniwien.ac.at / philipp.matten@gmx.de
+                
+                        Copyright 2020 Medical University of Vienna 
+                                        ******
+                                        
+        >>> Contains methods and functionality for general OCT data input/output (I/O)     
+                                        
 """
 
-# proprietary imports
+# global imports
 import os 
 from PIL import Image
 import time
@@ -15,7 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tkinter.filedialog import Tk, askopenfilename 
 
-# costom imports
+# custom imports
 
 
 ###############################
