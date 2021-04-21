@@ -9,6 +9,10 @@
                                 
 """
 
+###################################################################################
+# DEPRECATED FUNCTIONS - RECONSTRUCTION WILL BE THE SCRIPT CONTAINING ALL FUNCTIONS
+###################################################################################
+
 # global imports
 import os
 import time
