@@ -10,9 +10,11 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-##############
-### MACROS ###
-##############
+import data_io as IO
+
+################################
+### MACROS FOR DATA HANDLING ###
+################################
 def reshape_data_after_dims(data, file_name, is_dims_in_file_name=True) :
     """
     reshapes data according to its supposed dimensionality
@@ -31,15 +33,21 @@ def reshape_data_after_dims(data, file_name, is_dims_in_file_name=True) :
 #########################
 ### PRE-FFT FUNCTIONS ###
 #########################
-def subtract_background(data) :
-    pass
+def subtract_background(data, background=None) :
+    """
+    >>> Returns noise-reduced (preprocessing) OCT-data as uint16
+    If background is None (dafault) the background set to average A-scan of data 
+    """
+    if background is None :  
+            background = np.mean(data, axis=tuple(range(1, data.ndim)))
+    return np.asarray(np.subtract(data, background), dtype=np.uint16)
 
 def apply_windowing(data, window='gauss') :
     pass
 
-###########
-### FFT ###
-###########
+###########################
+###         FFT         ###
+###########################
 def apply_fft(data) :
     pass
 
@@ -63,13 +71,15 @@ def rescale_grey_values(data, black_lvl, scale_factor) :
     out_data = np.asarray(255 * np.divide((np.subtract(data, black_lvl)), scale_factor))
 
 
-
-# TODO: Copy and adapt all reconstruction functions to the scheme developed above 
+ # TODO: Copy and adapt all reconstruction functions to the scheme developed above 
 
 ### Testing ###
-if __name__ == "__main__" :
+def main():
     string = "data_1024x512x128.bin"
     reshape_data_after_dims(np.zeros((1,1,1)), string)
+
+if __name__ == "__main__" :
+    main()
 
 
 # def substract_background(scan, background=None) :
