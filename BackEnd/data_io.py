@@ -77,11 +77,14 @@ class OctDataFileManager() :
         print("[DONE] Saving selected volume!")
     
     def load_image_file(self, file_path, dtype_loading=np.uint8) -> np.array :
-        if os.path.isfile(file_path) :  
-            img = cv2.imread(file_path)
-        if img :
+        """ Check if it works... """
+        assert os.path.isfile(file_path)  
+        img = cv2.imread(file_path)
+        if np.asarray(img).shape > 1 :
             return np.asarray(img[:,:,0], dtype=dtype_loading) 
-    
+        else :
+            return np.asarray(img, dtype=dtype_loading)
+        
     def load_all_imgs_in_dir(self, img_list, dtype_loading=np.uint8) -> np.array :
         img_buffer = []
         for img in img_list :
