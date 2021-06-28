@@ -80,7 +80,7 @@ class OctDataFileManager() :
         """ Check if it works... """
         assert os.path.isfile(file_path)  
         img = cv2.imread(file_path)
-        if np.asarray(img).shape > 1 :
+        if np.asarray(img).shape[-1] > 1 :
             return np.asarray(img[:,:,0], dtype=dtype_loading) 
         else :
             return np.asarray(img, dtype=dtype_loading)
