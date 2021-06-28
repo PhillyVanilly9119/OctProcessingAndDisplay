@@ -39,7 +39,7 @@ class OctDataFileManager() :
         self.dtype = dtype
     
     def get_main_dir(self) -> str :
-        """ returns the directory in which the selected file self.file_path_main is located""" 
+        """ returns the directory in which the selected file self.file_path_main is located """ 
         return os.path.join( *(os.path.split(self.file_path_main)[:-1]) )
     
     def get_list_of_only_files(self) -> None :
@@ -74,7 +74,7 @@ class OctDataFileManager() :
         _path_saving = os.path.join(self.dir_main, filename_saving)
         print(f"Saving selected volume to file {filename_saving}... ")
         buffer.astype(dtype_save).tofile(_path_saving)
-        print("[DONE]Saving selected volume!")
+        print("[DONE] Saving selected volume!")
     
     def load_image_file(self, file_path, dtype_loading=np.uint8) -> np.array :
         if os.path.isfile(file_path) :  
@@ -91,7 +91,7 @@ class OctDataFileManager() :
                     img_buffer.append(c_img[:,:,0])
                 else : # assuming grey-scale img 
                     img_buffer.append(c_img)
-        return np.asarray(img_buffer, dtype=dtype_loading)
+        return np.asarray(img_buffer, dtype=dtype_loading) 
     
     def reshape_oct_volume(self, buffer: np.array) -> np.array :
         """ Returns reshaped volume buffer/np-array acc. to self.dims-shape """
