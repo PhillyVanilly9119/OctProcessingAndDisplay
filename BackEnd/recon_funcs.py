@@ -27,46 +27,45 @@ import data_io as DataIO
 class OctReconstructionManagager(DataIO.OctDataFileManager) :
     def __init__(self, is_user_file_selection: bool, file_path_main: str, dtype) -> None:
         super().__init__(is_user_file_selection=is_user_file_selection, file_path_main=file_path_main, dtype=dtype)
+        self.dtype_raw = dtype
+        self.dtype_recon = 'uint8'
     
+    def adjust_dim_for_processing(self, buffer, vector) -> np.array :
+        """ evaluate and prepare buffer and vector for numpy matrix-vector operations """
+        if buffer.ndim == 1 :
+            return np.asarray(buffer), np.asarray(vector)     
+        elif buffer.ndim == 2 :
+            return np.asarray(buffer), np.asarray(vector[:, np.newaxis])
+        elif buffer.ndim == 3 :
+            return np.asarray(buffer), np.asarray(vector[:, np.newaxis, np.newaxis])
+        else : 
+            print("[DIMENSIONALITY WARNING:] returning empty array (dimensionality neither 1,2 or 3)")
+            return []
+            
+    def return_nDim_indepentent_averaged_vec(self, buffer) -> np.array :
+        """ returns 1D-vector of with the length of an a-Scan containing averaged samples (for i.e. BG-Sub.)"""
+        if buffer.ndim == 1 : 
+            print("[CAUTION] return vector is equivalent to input/a-Scan (1D array)")
+            return buffer
+        elif buffer.ndim == 2 :
+            return np.average(buffer, axis=1)
+        elif buffer.ndim == 3 :
+            return np.average(buffer, axis=(1,2))
+        else : # TODO: check if necessary, since preprocessing should take care of that
+            raise ValueError("[DIMENSION ERROR] of OCT array")
+    
+    def substract_background(self, buffer, background=None) :
+            """ Returns denoised OCT buffer (corresponding to sampling) """
+            if not background : # calculate background from buffer, if it is None
+                background = self.average_nDim_independent(buffer)
+            return np.subtract( *self.adjust_dim_for_processing(buffer, background), dtype=self.dtype_raw )
+        
     # TODO: Think which reconstruction parameters are needed
     
-    # def preprocess_dimensionality(self, buffer, vector) -> np.array :
-    #     """ evaluate and prepare buffer and vector for numpy matrix-vektor operations """
-    #     if buffer.ndim == 1 :
-    #         return np.asarray(buffer), np.asarray(vector)     
-    #     elif buffer.ndim == 2 :
-    #         return np.asarray(buffer), np.asarray(vector[:, np.newaxis])
-    #     elif buffer.ndim == 3 :
-    #         return np.asarray(buffer), np.asarray(vector[:, np.newaxis, np.newaxis])
-    #     else : 
-    #         raise ValueError("[DIMENSIONALITY ERROR] while preprocessing for numpy operation")
-    #         return []
 
-    # def average_nDim_independent(self, buffer) -> np.array :
-    #     """ returns 1D-vector of with the length of an a-Scan containing averaged samples (for i.e. BG-Sub.)"""
-    #     if buffer.ndim == 1 : 
-    #         print("[CAUTION] return vector is equivalent to input/a-Scan (1D array)")
-    #         return buffer
-    #     elif buffer.ndim == 2 :
-    #         return np.average(buffer, axis=1)
-    #     elif buffer.ndim == 3 :
-    #         return np.average(buffer, axis=(1,2))
-    #     else : # TODO: check if necessary, since preprocessing should take care of that
-    #         raise ValueError("[DIMENSION ERROR] of OCT array")
 
 
 ### OCT RECONSTRUCTION OPERATIONS ###
-def substract_background(scan, background=None) :
-        """
-        >>> Returns noise-reduced OCT-data as uint16 (corresponding to sampling)
-        """
-        if background is not None : 
-                background = background
-        else :   
-                background = DataIO.average_nDim_independent(scan)
-        _, background = DataIO.preprocess_dimensionality(scan, background)
-        return np.asarray(np.subtract(scan, background), 
-                          dtype=np.uint16)
 
 def create_disperion(a_len, coeffs) :
         """
