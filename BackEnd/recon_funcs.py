@@ -28,6 +28,8 @@ class OctReconstructionManagager(DataIO.OctDataFileManager) :
     def __init__(self, is_user_file_selection: bool, file_path_main: str, dtype) -> None:
         super().__init__(is_user_file_selection=is_user_file_selection, file_path_main=file_path_main, dtype=dtype)
     
+    # TODO: Think which reconstruction parameters are needed
+    
     # def preprocess_dimensionality(self, buffer, vector) -> np.array :
     #     """ evaluate and prepare buffer and vector for numpy matrix-vektor operations """
     #     if buffer.ndim == 1 :

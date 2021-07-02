@@ -131,10 +131,10 @@ if __name__ == '__main__' :
         MAN = OctDataFileManager(is_user_file_selection=False, 
                                  file_path_main = r"E:\WetLabsAndreas11062021\HDF5_ContinuousVolumeExport_decoded\20210611_133155_cubes\20210611_133155_949x583x583_0.bin")
         data = MAN.return_oct_cube()
-        print(data.shape)
-        print(data.ndim)
-        print(data.dtype)
-        print("Success!")
+        # print(data.shape)
+        # print(data.ndim)
+        # print(data.dtype)
+        # print("Success!")
         plt.imshow(data[:,:,300])
         plt.show()
         
