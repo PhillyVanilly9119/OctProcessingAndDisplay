@@ -12,23 +12,26 @@ import matplotlib.pyplot as plt
 
 import data_io as IO
 
+### INFO ###
+# commented functiosn are either deprecated and/or have been moved to teh OOP style script
+
 ################################
 ### MACROS FOR DATA HANDLING ###
 ################################
-def reshape_data_after_dims(data, file_name, is_dims_in_file_name=True) :
-    """
-    reshapes data according to its supposed dimensionality
-    -> flag assumes a file name in the format <name_ZxXxY.bin> (in optical dimensions) 
-    """
-    if is_dims_in_file_name :
-        intermediate_name = file_name.split('_')[-1].split('.bin')
-        string_dims = intermediate_name[0]
-        dims = string_dims.split('x')
-    else :
-        print("[CAUTION:] Logic not yet implemented!")
-        pass
-    print(tuple(dims))
-    return np.asarray(data)
+# def reshape_data_after_dims(data, file_name, is_dims_in_file_name=True) :
+#     """
+#     reshapes data according to its supposed dimensionality
+#     -> flag assumes a file name in the format <name_ZxXxY.bin> (in optical dimensions) 
+#     """
+#     if is_dims_in_file_name :
+#         intermediate_name = file_name.split('_')[-1].split('.bin')
+#         string_dims = intermediate_name[0]
+#         dims = string_dims.split('x')
+#     else :
+#         print("[CAUTION:] Logic not yet implemented!")
+#         pass
+#     print(tuple(dims))
+#     return np.asarray(data)
 
 #########################
 ### PRE-FFT FUNCTIONS ###
