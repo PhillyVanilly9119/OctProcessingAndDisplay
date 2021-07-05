@@ -63,7 +63,6 @@ class OctDataFileManager() :
         dims = tuple(int(i) for i in dims_block.split('x'))
         return dims
     
-    # A MAIN CLASS METHOD 
     def return_oct_cube(self) :
         """ returns properly reshaped OCT data (cube) """
         return self.reshape_oct_volume( self.load_selected_bin_file() )
@@ -128,13 +127,6 @@ class OctDataFileManager() :
                     
                     
 if __name__ == '__main__' :
-        MAN = OctDataFileManager(is_user_file_selection=False, 
-                                 file_path_main = r"E:\WetLabsAndreas11062021\HDF5_ContinuousVolumeExport_decoded\20210611_133155_cubes\20210611_133155_949x583x583_0.bin")
-        data = MAN.return_oct_cube()
-        # print(data.shape)
-        # print(data.ndim)
-        # print(data.dtype)
-        # print("Success!")
-        plt.imshow(data[:,:,300])
-        plt.show()
-        
+    # Only used for testing and debugging purposes
+    pass
+       
