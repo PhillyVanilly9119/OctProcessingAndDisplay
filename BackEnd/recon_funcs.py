@@ -9,273 +9,160 @@
                                 
 """
 
-###################################################################################
-# DEPRECATED FUNCTIONS - RECONSTRUCTION WILL BE THE SCRIPT CONTAINING ALL FUNCTIONS
-###################################################################################
-
 # global imports
-import os
-import time
 import numpy as np
+from numpy.lib.nanfunctions import nanmedian
 from scipy import signal
-from random import random
 import matplotlib.pyplot as plt
 
 # custom imports
-import data_io as DataIO
+import data_io as IO
 
-class OctReconstructionManagager(DataIO.OctDataFileManager) :
-    def __init__(self, is_user_file_selection: bool, file_path_main: str, dtype) -> None:
+class OctReconstructionManager(IO.OctDataFileManager) :
+    def __init__(self, is_user_file_selection: bool=True, file_path_main: str='', dtype=np.uint16) -> None:
         super().__init__(is_user_file_selection=is_user_file_selection, file_path_main=file_path_main, dtype=dtype)
         self.dtype_raw = dtype
-        self.dtype_recon = 'uint8'
+        self.dtype_recon = np.uint8
+
+    #### "high-level" combined functions for testing and easy work flow (prob not applicable in GUI) ####   
+    def reconstruct_buffer(self, buffer: np.ndarray, disp_coeffs: tuple=(0,0,0,0), wind_key: str='hann' ) -> np.ndarray : 
+        """ performs reconstruction on entire passed-in OCT data buffer """
+        pre_buffer = np.asarray( self.apply_pre_fft_functions(buffer, disp_coeffs, wind_key) )
+        post_buffer = self.perform_fft(pre_buffer)
+        return self.apply_post_fft_functions( post_buffer )
     
-    def adjust_dim_for_processing(self, buffer, vector) -> np.array :
+    def apply_pre_fft_functions(self, buffer: np.ndarray, coeffs: tuple, key: str) -> np.ndarray :
+        """ method that applies all neccessary pre-FFT operations """
+        data = self.substract_background(buffer)
+        return self.apply_dispersion_correction(data, coeffs=coeffs, key=key)
+        
+    def apply_post_fft_functions(self, buffer: np.ndarray, samples_crop: int=0) -> np.ndarray:
+        """ method that applies all neccessary post-FFT operations """
+        data = self.return_absolute( self.crop_fft_buffer(buffer) )
+        data = self.crop_aScan_samples( data, samples_crop)
+        return self.return_scaled( data ) 
+    
+    def perform_fft(self, buffer: np.ndarray, l_pad=None) -> np.ndarray :
+        """ apply fast fourier transform to the entire OCT data buffer """
+        # TODO: check if it can be optimized, so that the FFT length of an A-scan is always powers of 2
+        if l_pad is None :
+            l_pad = buffer.shape[0]
+        assert l_pad >= 0, "Padding values must be positve integer values"
+        return np.asarray( np.fft.ifft( self.pad_buffer_along_axis(buffer, l_pad + buffer.shape[0]), axis=0 ), dtype=np.complex64 )
+                      
+    #### meta methods - methods adjust for dimensional mismatch of two arrays ####  
+    def adjust_dim_for_processing(self, buffer: np.ndarray, vector: np.ndarray) -> np.ndarray :
         """ evaluate and prepare buffer and vector for numpy matrix-vector operations """
         if buffer.ndim == 1 :
-            return np.asarray(buffer), np.asarray(vector)     
+            return np.asarray( buffer ), np.asarray( vector )     
         elif buffer.ndim == 2 :
-            return np.asarray(buffer), np.asarray(vector[:, np.newaxis])
+            return np.asarray( buffer ), np.asarray( vector[:, np.newaxis] )
         elif buffer.ndim == 3 :
-            return np.asarray(buffer), np.asarray(vector[:, np.newaxis, np.newaxis])
+            return np.asarray( buffer ), np.asarray( vector[:, np.newaxis, np.newaxis] )
         else : 
             print("[DIMENSIONALITY WARNING:] returning empty array (dimensionality neither 1,2 or 3)")
             return []
-            
-    def return_nDim_indepentent_averaged_vec(self, buffer) -> np.array :
-        """ returns 1D-vector of with the length of an a-Scan containing averaged samples (for i.e. BG-Sub.)"""
-        if buffer.ndim == 1 : 
-            print("[CAUTION] return vector is equivalent to input/a-Scan (1D array)")
-            return buffer
-        elif buffer.ndim == 2 :
-            return np.average(buffer, axis=1)
-        elif buffer.ndim == 3 :
-            return np.average(buffer, axis=(1,2))
-        else : # TODO: check if necessary, since preprocessing should take care of that
-            raise ValueError("[DIMENSION ERROR] of OCT array")
+
+    def calculate_nDim_independant_ascan_avg(self, buffer: np.ndarray) -> np.ndarray :
+        """ calculates and returns averaged A-scan for i.e. background subtraction """
+        return np.asarray( np.mean(buffer, axis=tuple(range(1, buffer.ndim)), dtype=self.dtype_raw) )
     
-    def substract_background(self, buffer, background=None) :
-            """ Returns denoised OCT buffer (corresponding to sampling) """
-            if not background : # calculate background from buffer, if it is None
-                background = self.average_nDim_independent(buffer)
-            return np.subtract( *self.adjust_dim_for_processing(buffer, background), dtype=self.dtype_raw )
+    def calculate_nDim_independant_ascan_median(self, buffer: np.ndarray) -> np.ndarray :
+        """ calculates and returns median A-scan for i.e. background subtraction """
+        return np.asarray( np.median(buffer, axis=tuple(range(1, buffer.ndim)), dtype=self.dtype_raw) )
+
+    #### pre-FFT processing methods ####
+    def substract_background(self, buffer: np.ndarray, background: np.ndarray=None) -> np.ndarray :
+        """ Returns denoised OCT buffer (corresponding to sampling) """
+        if background is None :  
+                background = self.calculate_nDim_independant_ascan_avg( buffer )
+        return np.asarray( np.subtract( *self.adjust_dim_for_processing(buffer, background), dtype=self.dtype_raw ) )
         
-    # TODO: Think which reconstruction parameters are needed
+    def create_comp_disp_vec(self, a_len: int, coeffs: tuple, window: str='hann') -> np.ndarray :
+        """ apply (windowed) disperison vector to the entire OCT data buffer """
+        poly_disp = self.create_3rd_order_polynominal(a_len, coeffs )
+        win = self.create_windowing_function(a_len, key=window)
+        x = np.multiply( poly_disp, win )
+        y = np.multiply( np.cos( poly_disp ), win )
+        disp_vec = x + 1j * y
+        return np.asarray( disp_vec, dtype=np.complex64 )
+        
+    def create_3rd_order_polynominal(self, a_len: int, coeffs: tuple) -> np.ndarray :
+        """ creates real-valued polynominal to correct for dispersion mismatches """
+        return np.asarray( np.polyval( coeffs, np.linspace(-0.5, 0.5, a_len) ) )
     
-
-
-
-### OCT RECONSTRUCTION OPERATIONS ###
-
-def create_disperion(a_len, coeffs) :
-        """
-        >>> creates real-valued polynominal to correct for dispersion mismatches 
-        """
-        return np.asarray(np.polyval(coeffs, np.linspace(-0.5, 0.5, a_len)))
-
-def create_window(a_len, key=None) :
-        """
-        >>> Creates a real-valued vector to spectrally shape a raw OCT A-Scan
-        """
+    def create_windowing_function(self, a_len: int, key='hann', sigma: int=None) -> np.ndarray :
+        """ Creates a real-valued (float64) vector for i.e. spectrally shaping an A-scan """
+        if sigma is None:
+            sigma = a_len//10
         if key.lower() == 'hann' :
-                print("Using Hann-Window")
-                return np.hanning(a_len)
+                return np.asarray( np.hanning(a_len) )
         elif key.lower() == 'hamm' :
-                print("Using Hamming-Window")    
-                return np.hamming(a_len)
+                print("[INFO:] Using Hamming-Window - not Hanning-window")    
+                return np.asarray( np.hamming(a_len) ) 
         elif key.lower() == 'kaiser' :
-                print("Using Kaiser-Window")
-                return np.kaiser(a_len)
+                print("[INFO:] Using Kaiser-Window - not Hanning-window")
+                return np.asarray( np.kaiser(a_len) )
         elif key.lower() == 'gauss' :
-                print("Using Gaussian-Window")
-                return signal.gaussian(a_len, round(a_len/10))
-        else :
+                print("[INFO:] Using Gaussian-Window - not Hanning-window")
+                return np.asarray( signal.gaussian(a_len, sigma) )
+        else : # TODO Check if this works well when it is called from i.e. the GUI 
                 raise ValueError("You have passed an unrecognized key for the windowing-parameter")
-
-def apply_dispersion_correction(scan, coeffs) :
-        """
-        >>> Creates and applies (complex-valued) dispersion correction to OCT data
-        """
-        # error handling
-        assert np.size(coeffs) == 4, "[DIMENSION ERROR] the disperison coefficients must be a tuple of 4 values"
-        # create windowing-function
-        disp_poly = create_disperion(np.shape(scan)[0], coeffs)
-        disp = np.exp(1j*disp_poly) 
-        # apply vectorized windowing 
-        _, disp = DataIO.preprocess_dimensionality(scan, disp)
-        return np.asarray(np.multiply(scan, disp), 
-                          dtype=np.complex64)      
-
-def apply_windowing(scan, key='hann') :
-        """
-        >>> Apply filter windows to spectrally shape OCT raw signals
-        -> returns windowed OCT-scan
-        """
-        dims = np.shape(scan)
-        disp_wind = np.asarray(np.zeros_like(scan), dtype=np.complex64)
-        a_len = dims[0]       
-        print(a_len)
-        window = create_window(a_len, key=key)
-        return window
-        _, window = DataIO.preprocess_dimensionality(scan, window)
-        # TODO: Which return is more valid
-        disp_wind.real = np.asarray(np.multiply(scan, np.cos(window)), dtype=np.complex64)
-        disp_wind.imag = np.asarray(np.multiply(scan, np.sin(window)), dtype=np.complex64)
-        assert np.dtype(disp_wind) == np.complex64, "Wrong data type before return in apply_windowing"
-        return np.asarray(disp_wind)
-        # return np.asarray(np.multiply(scan, np.exp(1j*window)), 
-        #                   dtype=np.complex64)  
+                
+    def apply_windowing(self, buffer: np.ndarray, key: str) -> np.ndarray :
+        """ apply windowing function to the entire OCT data buffer """
+        window = self.create_windowing_function(buffer.shape[0], key=key)
+        return np.asarray( np.multiply( *self.adjust_dim_for_processing(buffer, window) ) )
+    
+    def apply_dispersion_correction(self, buffer: np.ndarray, coeffs: tuple, key: str) -> np.ndarray : 
+        """ apply windowing function to the entire OCT data buffer """
+        disp = self.create_comp_disp_vec( buffer.shape[0], coeffs=coeffs, window=key)
+        return np.asarray( np.multiply( *self.adjust_dim_for_processing(buffer, disp) ), dtype=np.complex64 )
+    
+    #### FFT methods ####
+    def pad_buffer_along_axis(self, buffer: np.ndarray, target_length: int, axis: int = 0) -> np.ndarray :
+        """ pads zeros along a certain axis (default along A-scan axis) and returns padded array """
+        pad_size = target_length - buffer.shape[axis]
+        if pad_size <= 0:
+            return buffer
+        npad = [(0, 0)] * buffer.ndim
+        npad[axis] = (pad_size, 0)
+        return np.asarray( np.pad(buffer, pad_width=npad, mode='constant', constant_values=0) )
+    
+    def crop_fft_buffer(self, buffer: np.ndarray) -> np.ndarray :
+        """ returns only first half of A-scan samples of complex buffer """
+        return np.asarray( buffer[:buffer.shape[0]//2] )
+    
+    #### post-FFT methods ####
+    def return_absolute(self, buffer: np.ndarray) -> np.ndarray :
+        """ returns absoulte values of a complex OCT data buffer """
+        abs_val_buffer = np.abs(buffer)
+        return np.asarray( abs_val_buffer, dtype=np.uint16 )
+    
+    def return_scaled(self, buffer: np.ndarray, black_lvl: int=0, disp_scale: int=64) -> np.ndarray :
+        """ returns scales version of OCT data buffer """
+        buffer[buffer<=1] = 2
+        return np.asarray( 255 * ( (20*np.log10(buffer) - black_lvl) / disp_scale), dtype=np.uint8 )
+    
+    def crop_aScan_samples(self, buffer: np.ndarray, samples_crop: int) -> np.ndarray :
+        """ returns buffer which has the first n-th samples (samples_crop) removed ("remoce DC") """
+        return np.asarray( buffer[samples_crop:], dtype=self.dtype_recon )
         
-def create_and_save_dispersion(path, a_len, coeffs) :
-        """
-        >>> Creates and saves a dispersion vector to the specified path 
-        """
-        disp = create_disperion(a_len, coeffs)
-        full_path = os.path.join(path, ('dispersion_' + a_len + '.bin'))
-        try :
-                disp.tofile(full_path).astype(np.complex64)
-        except TypeError as err :
-                print("Dispersion vector is not a numpy-ndarray ", err)
-        finally:
-                np.asarray(disp, dtype=np.complex64).tofile(full_path).astype(np.complex64)
-                print(f"Saved dispersion vector in <{full_path}>")        
-
-def apply_spectral_shaping(scan, disp_coeffs, key=None) :
-        a_len = np.shape(scan)[0]
-        if key is not None :
-                print(f"Applying {key}-windowed spectral shaping and dispersion correction") 
-                window = np.asarray(np.multiply(create_window(a_len, key=key), 
-                                                create_disperion(a_len, disp_coeffs)), 
-                                    dtype=np.complex64) # create and dot the window- and dispersion-vector
-                _, window = DataIO.preprocess_dimensionality(scan, create_disperion(a_len, disp_coeffs)) 
-                return np.asarray(np.multiply(scan, np.exp(1j*window)), 
-                                  dtype=np.complex64)  
-        else :
-                print("Applying dispersion correction")
-                _, window = DataIO.preprocess_dimensionality(scan, create_disperion(a_len, disp_coeffs)) # create dispersion vector
-                return np.asarray(np.multiply(scan, np.exp(1j*window)), 
-                        dtype=np.complex64)  
-
-def apply_spectral_splitting(data, split_factor, dtype=np.complex64) :
-        """
-        >>> Reshapes B-Scan like data buffer according to spectral splitting requirements
-        """
-        dims = np.shape(data)
-        return np.asarray(np.reshape(data, ((int(dims[0]/split_factor)), 
-                                            int(split_factor*dims[1]))), dtype=dtype)
-
-def perform_fft(scan) :
-        """
-        >>> Apply IDFT to pre-processed OCT data and return result of transform
-        -> Zero-Padding and cropping are applied  
-        """
-        a_len = np.shape(scan)[1]
-        if np.size(np.shape(scan)) == 1 : 
-                transformed_scan = np.zeros(shape=(np.shape(scan)), 
-                                            dtype=np.complex64)
-                transformed_scan = np.asarray(np.pad(scan, 
-                                                     ((a_len, 0)), 
-                                                     mode='constant'))
-                transformed_scan[a_len:] = scan
-        elif np.size(np.shape(scan)) == 2 :
-                transformed_scan = np.zeros(shape=(np.shape(scan)), 
-                                            dtype=np.complex64)
-                transformed_scan = np.asarray(np.pad(scan, 
-                                                     ((a_len, 0), (0, 0)), 
-                                                     mode='constant'))
-        elif np.size(np.shape(scan)) == 3 :
-                transformed_scan = np.zeros(shape=(np.shape(scan)), 
-                                            dtype=np.complex64)
-                transformed_scan = np.asarray(np.pad(scan, 
-                                                     ((a_len, 0), (0, 0), (0, 0)), 
-                                                     mode='constant'))
-        else : # TODO: check if necessary, since preprocessing should take care of that
-                raise ValueError("[DIMENSION ERROR] of OCT volume")
-        return np.asarray(np.abs(np.fft.ifft(transformed_scan, axis=0))[a_len:],
-                          dtype=np.uint8)
-        
-def abs_and_log(scan, is_scale_dynamic_range=False) :
-        """
-        >>> Rescale the reconstructed OCT scans 
-        """
-        if is_scale_dynamic_range :
-                # Why doesnt this work in Python if value>0 ?
-                BLACK_LVL = 0
-                RECON_RNG = 64
-                return np.asarray(255 * np.true_divide(np.nan_to_num(20*np.log10(scan) - BLACK_LVL), RECON_RNG), dtype=np.uint8)
-        else :
-                return np.asarray(20*np.log10(np.abs(scan)), dtype=np.uint8)
-
-def reconstruct(disp_coeffs,
-                file_name=None, 
-                key=None, 
-                cropped_range=100, 
-                spectral_split_factor=1, 
-                is_apply_windowing=False, 
-                is_substract_background=True) :
-        """
-        >>> MACRO for function calls that perform SS OCT-reconstruction 
-        """
-        # Load data file
-        if file_name is not None :
-                path = os.path.join(f"{file_name.split('/')[0]}\\", *file_name.split('/')[1:-1])
-                folder = file_name.split('/')[-1]
-        else :
-                path, folder = DataIO.get_usr_selected_file()
-        raw_buffer = DataIO.load_data_from_bin(path, folder, is_dim_appendix=True, is_reshaping_array=True)
-        return raw_buffer
-        # Pre-Processing options
-        if is_substract_background:
-                raw_buffer = substract_background(raw_buffer)
-        if is_apply_windowing :
-                raw_buffer = apply_spectral_shaping(raw_buffer, disp_coeffs, key=key)
-        else :
-                raw_buffer = apply_dispersion_correction(raw_buffer, disp_coeffs)
-        if spectral_split_factor != 1 :
-                raw_buffer = apply_spectral_splitting(raw_buffer, spectral_split_factor)
-        # FFT
-        oct_data = perform_fft(raw_buffer)
-        # Scale for display
-        oct_data = abs_and_log(oct_data, is_scale_dynamic_range=True)
-        print(f"Reconstructed buffer with displayable size={np.shape(oct_data)}")
-        return oct_data
-
-# TODO: Check why background subtraction causes overflow... 
-# -> Weird artifacts in A-Scans cause BG-Vector to look weird... Maybe BG should be calced differently
-# TODO: Check handling of return data types
-# TODO: Dispersion Compensation doesnt seem to be working
-
-def main() :
-        file_name = 'C:/Users/Philipp/Desktop/out_before_2048x1024.bin'
-        coeffs = (-21,140,0,0)
-        path = os.path.join(f"{file_name.split('/')[0]}\\", *file_name.split('/')[1:-1])
-        folder = file_name.split('/')[-1]
-
-        # data = reconstruct((coeffs), file_name=os.path.join(path, folder))
+    #### Auxiliary functions ####
+    # TODO: test the functions
+    def apply_spectral_splitting(self, buffer: np.ndarray, split_factor: int) : # WORKS only buffers
+        """ Reshapes B-Scan-like data buffer according to spectral splitting requirements """
+        # TODO: rework for general use case, aka for OCT volume data not just B-scans/buffer
+        return np.asarray( np.reshape( buffer, (buffer.shape[0] // split_factor, 
+                                               split_factor * buffer.shape[1]) ) )
 
 if __name__ == '__main__' :
-        main()
-        
-# =============================================================================
-# data = DataIO.load_data_from_bin(path, folder, is_dim_appendix=True, is_reshaping_array=True)
-# =============================================================================
-
-# vec = np.linspace(-300, 300, num=61)
-# for _, num in enumerate(vec) :
-#         data = reconstruct((0,num,0,0), file_name=file_name, key='hann', cropped_range=50, spectral_split_factor=1,  
-#                         is_substract_background=False, is_apply_windowing=True)
-#         plt.imshow(np.abs(data))
-#         plt.show(block=False)  
-#         plt.savefig(os.path.join(r'C:\Users\Philipp\Desktop\Dispersion', f'cube_{num}.bmp'))
-#         plt.pause(1)
-#         plt.close()
-
-### APPENDIX ###    
-# def consecutive(data, stepsize=1):
-#     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
-
-# def rand(start, end, num): 
-#     res = [] 
-#     for _ in range(num): 
-#         res.append(random.randint(start, end)) 
-#     return np.array(res)
+    print("Running")
+    REC = OctReconstructionManager(is_user_file_selection=False, 
+                                     file_path_main=r'D:\PhilippDataAndFiles\4D-OCT\Data\reconstructed_1536x640x645_vol.bin')
+    data = REC.return_oct_cube()
+    recon = REC.reconstruct_buffer(data[:,:,300])
+    print(recon.shape)
+    print(recon.dtype) 
+    plt.imshow(recon)
+    plt.show()
