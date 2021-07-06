@@ -8,10 +8,26 @@
         >>> main file for OCT Recon GUI creation, methods and handling     
                                 
 """
+# global imports
+import sys
+
+# custom imports
+sys.path.append(r"D:\PhilippDataAndFiles\Programming\Repositories\OctProcessingAndDisplay\Backend")
+from data_io import OctDataFileManager
+from recon_funcs import OctReconstructionManager
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-class Ui_Dialog(object):
+class UiWindowDialog(object):
+    
+    # Is this contructor pointless? 
+    # Can I call setupUi somehow from this constructor?   
+    def __init__(self) -> None:
+        super().__init__()
+        self.IO = OctDataFileManager()
+        self.REC = OctReconstructionManager()
+        # print(self.IO)
+        # print(self.REC)
             
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
@@ -187,9 +203,18 @@ class Ui_Dialog(object):
         self.label_WindowingFunction_.setFont(font)
         self.label_WindowingFunction_.setObjectName("label_WindowingFunction_")
 
+        # set Labels and
         self.retranslateUi(Dialog)
         
+        # load OCT data
+        self.pushButton_loadOctData.clicked.connect(self._load_oct_data)
+        # exit if close button is pressed
         self.close_application_via_button()            
+        """
+        1. if and only if oct data cube has been loaded 
+            Options:
+                i) display reconstructed selected A-scans
+        """
         
         self.horizontalSlider_leftBScanWindow.valueChanged['int'].connect(self.spinBox_leftBScanWindow.setValue)
         self.spinBox_leftBScanWindow.valueChanged['int'].connect(self.horizontalSlider_leftBScanWindow.setValue)
@@ -215,15 +240,34 @@ class Ui_Dialog(object):
         self.label_ConsoleLog.setText(_translate("Dialog", "Console prints"))
         self.label_DisplayOptions_.setText(_translate("Dialog", "Display Options"))
         self.label_WindowingFunction_.setText(_translate("Dialog", "Windowing Function"))
+  
+    #### Backend-connected functions ####
+
+    def run_recon_for_current_settings(self) :
+        pass
+        
+    def _load_oct_data(self):
+        """ loads user-selected file containing OCT data and created class-vars raw data buffer and dimensions """
+        print("Loading OCT data... ")
+        buffer_oct_raw_data = self.IO.load_oct_data() 
+        print(f"Loaded selected buffer (shape={buffer_oct_raw_data.shape}) into memory")
+        self.buffer_oct_raw_data = buffer_oct_raw_data
+        self.dims_buffer_oct_raw_data = buffer_oct_raw_data.shape
+        
+    def show_reconstructed_bScans(self) :
+        pass
 
     def close_application_via_button(self) :
         self.pushButton_close.clicked.connect(QtCore.QCoreApplication.instance().quit)
 
-if __name__ == "__main__":
-    import sys
+
+def run() :
     app = QtWidgets.QApplication(sys.argv)
     Dialog = QtWidgets.QDialog()
-    ui = Ui_Dialog()
+    ui = UiWindowDialog()
     ui.setupUi(Dialog)
     Dialog.show()
     sys.exit(app.exec_())
+        
+if __name__ == "__main__":
+    run()
