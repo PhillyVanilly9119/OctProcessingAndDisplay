@@ -5,7 +5,7 @@
                         Copyright 2020 Medical University of Vienna 
                                         ******
                                          
-        >>> main file file for OCT Recon GUI creation, methods and handling     
+        >>> main file for OCT Recon GUI creation, methods and handling     
                                 
 """
 

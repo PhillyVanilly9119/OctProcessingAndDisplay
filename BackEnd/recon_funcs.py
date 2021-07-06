@@ -19,9 +19,9 @@ import matplotlib.pyplot as plt
 import data_io as IO
 
 class OctReconstructionManager(IO.OctDataFileManager) :
-    def __init__(self, is_user_file_selection: bool=True, file_path_main: str='', dtype=np.uint16) -> None:
-        super().__init__(is_user_file_selection=is_user_file_selection, file_path_main=file_path_main, dtype=dtype)
-        self.dtype_raw = dtype
+    def __init__(self, dtype_loading='uint16') -> None:
+        super().__init__(dtype_loading=dtype_loading)
+        self.dtype_raw = dtype_loading
         self.dtype_recon = np.uint8
 
     #### "high-level" combined functions for testing and easy work flow (prob not applicable in GUI) ####   
@@ -159,12 +159,6 @@ class OctReconstructionManager(IO.OctDataFileManager) :
 # for testing and debugging purposes
 if __name__ == '__main__' :
     print("[INFO:] Running from recon_funcs...")
-    
-    # REC = OctReconstructionManager(is_user_file_selection=False, 
-    #                                  file_path_main=r'D:\PhilippDataAndFiles\4D-OCT\Data\reconstructed_1536x640x645_vol.bin')
-    # data = REC.load_oct_data()
-    # recon = REC.reconstruct_buffer(data[:,:,300])
-    # print(recon.shape)
-    # print(recon.dtype) 
-    # plt.imshow(recon)
-    # plt.show()
+    REC = OctReconstructionManager()
+    # print(data.shape)
+    # print(data.dtype) 

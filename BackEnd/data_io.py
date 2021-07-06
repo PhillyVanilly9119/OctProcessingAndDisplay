@@ -13,9 +13,7 @@
 import os
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 
-from typing import List
 from tkinter.filedialog import Tk, askopenfilename 
 
 # custom imports
@@ -23,22 +21,22 @@ from tkinter.filedialog import Tk, askopenfilename
 
 class OctDataFileManager() :
     """
-    >>> Data managememt class for handling OCT-data I/O
-    Constructor variables:
-        > is_user_file_selection = flag to decide 
-        > file_path_main = path to the (*.BIN)-file containing the OCT data
-        > dtype = Data type of the expeted data - usually uint16 (OCT raw data) 
+    >>> OCT-data I/O class for handling OCT data in binaries and images
+    (so far, images have not been test and/or properly been implemented)
     """
-    def __init__(self, is_user_file_selection: bool=False, file_path_main: str='', dtype='uint8') -> None:
-        self.dtype = dtype
-        if is_user_file_selection :
-                self.file_path_main = self.tk_file_selection()
-        else :
-                self.file_path_main = file_path_main
-        # get the path to the main dir in which the file is located 
+    def __init__(self, dtype_loading='uint16') -> None:
+        self.dtype_loading = dtype_loading
+        self.is_user_selected_directory = False # label to see if directory was selected
+                
+    def get_oct_meta_data(self) :
+        """ makes user select file creates class variables of """   
+        self.file_path_main = self.tk_file_selection()
         self.dir_main = self.get_main_dir()
-        # get OCT volume dimensions from the file name
-        self.dims = self.get_oct_volume_dims(self.file_path_main)
+        self.oct_dims, self.oct_ndims = self.get_oct_volume_dims(self.file_path_main)
+        
+    def _display_meta_data(self):
+        self.get_oct_meta_data()
+        print(f'OCT data (dimensions={self.oct_ndims}) shape = {self.oct_dims} ')
  
     # CONSTR: Gets called by contructor to create class variable with the main-dir
     def get_main_dir(self) -> str :
@@ -48,6 +46,7 @@ class OctDataFileManager() :
     # CONSTR: Gets called by contructor to make user select a file containing OCT-data 
     def tk_file_selection(self) -> str :
         """ returns full path of a file that the user selects via a GUI/prompt """
+        self.is_user_selected_directory = True
         root = Tk()
         root.withdraw()
         path = askopenfilename(title='Please select a file')
@@ -61,10 +60,11 @@ class OctDataFileManager() :
         dims_list = [s for s in file_name.split('_') if s.find('x') != -1]
         dims_block = ''.join(dims_list)
         dims = tuple(int(i) for i in dims_block.split('x'))
-        return dims
+        return dims, len(dims)
     
     def load_oct_data(self) :
         """ returns properly reshaped OCT data (cube) """
+        self.get_oct_meta_data() # creates <self.file_path_main>, which is needed in < self.load_selected_bin_file()>
         return self.reshape_oct_volume( self.load_selected_bin_file() )
     
     def load_selected_bin_file(self) :
@@ -73,18 +73,18 @@ class OctDataFileManager() :
     
     def reshape_oct_volume(self, buffer: np.array) -> np.array :
         """ Returns reshaped volume buffer/np-array acc. to self.dims-shape """
-        return np.asarray( np.reshape(buffer, (self.dims)) )
+        return np.asarray( np.reshape(buffer, (self.oct_dims)) )
     
     def load_bin_file(self, path_file) -> np.array :
         """ loads and returns data in a numpy.array """
         assert os.path.isfile(path_file), "[CAUTION] path/string doesn't contain a valid file"
-        return np.asarray(np.fromfile(path_file, dtype=self.dtype))
+        return np.asarray(np.fromfile(path_file, dtype=self.dtype_loading))
     
     # TODO: test all methods from here on out
     def save_as_bin_file(self, buffer: np.array, pre_string: str, dtype_save=np.uint16) -> None :
         """ Saves selected volume in main directory with the established dimensions """
         # TODO: Rethink how to handle loading/saving dimensions tuples
-        filename_saving = pre_string + f'_{self.dims[0]}x{self.dims[1]}x{self.dims[2]}.bin'
+        filename_saving = pre_string + self.create_vol_dims_suffix + '.bin'
         _path_saving = os.path.join(self.dir_main, filename_saving)
         print(f"Saving selected volume to file {filename_saving}... ")
         buffer.astype(dtype_save).tofile(_path_saving)
@@ -96,14 +96,14 @@ class OctDataFileManager() :
     
     def create_vol_dims_suffix(self) -> str :
         """ Creates a string containing the OCT data dimensions for saving """
-        if len(self.dims) == 3 :
-            return f"{self.dims[0]}x{self.dims[1]}x{self.dims[2]}"
-        elif len(self.dims) == 2 :
-            return f"{self.dims[0]}x{self.dims[1]}"
+        if len(self.oct_dims) == 3 :
+            return f"{self.oct_dims[0]}x{self.oct_dims[1]}x{self.oct_dims[2]}"
+        elif len(self.oct_dims) == 2 :
+            return f"{self.dims[0]}x{self.oct_dims[1]}"
         elif len(self.dims) == 1 :
-            return f"{self.dims[0]}"
+            return f"{self.oct_dims[0]}"
         else :
-            ValueError("Dimensionality is not in range - please check <self.dims>!")
+            ValueError("Dimensionality is not in range - please check <self.oct_dims>!")
     
     def load_image_file(self, file_path, dtype_loading=np.uint8) -> np.array :
         """ Check if it works... """
@@ -129,4 +129,5 @@ class OctDataFileManager() :
 # for testing and debugging purposes
 if __name__ == '__main__' :
     print("[INFO:] Running from data_io...")
-       
+    IO = OctDataFileManager()
+    IO._display_meta_data()    

@@ -5,19 +5,14 @@
                         Copyright 2020 Medical University of Vienna 
                                         ******
                                          
-        >>> main file file for OCT Recon GUI creation, methods and handling     
+        >>> main file for OCT Recon GUI creation, methods and handling     
                                 
 """
 
-# global imports
-import sys
-import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-# custom imports 
-from recon_manager import ReconFunctionImports as RecFctnImp  
-
 class Ui_Dialog(object):
+            
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(1920, 1080)
@@ -33,16 +28,16 @@ class Ui_Dialog(object):
         self.Right_BScanWindow.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.Right_BScanWindow.setText("")
         self.Right_BScanWindow.setObjectName("Right_BScanWindow")
-        self.pushButton_EXIT = QtWidgets.QPushButton(Dialog)
-        self.pushButton_EXIT.setGeometry(QtCore.QRect(1790, 1020, 100, 35))
+        self.pushButton_close = QtWidgets.QPushButton(Dialog)
+        self.pushButton_close.setGeometry(QtCore.QRect(1790, 1010, 100, 35))
         font = QtGui.QFont()
         font.setFamily("Neue Haas Grotesk Text Pro")
         font.setPointSize(11)
         font.setBold(False)
         font.setWeight(50)
-        self.pushButton_EXIT.setFont(font)
-        self.pushButton_EXIT.setDefault(True)
-        self.pushButton_EXIT.setObjectName("pushButton_EXIT")
+        self.pushButton_close.setFont(font)
+        self.pushButton_close.setDefault(True)
+        self.pushButton_close.setObjectName("pushButton_close")
         self.DisplayOptionsWindow = QtWidgets.QLabel(Dialog)
         self.DisplayOptionsWindow.setGeometry(QtCore.QRect(30, 600, 650, 450))
         self.DisplayOptionsWindow.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -72,9 +67,9 @@ class Ui_Dialog(object):
         self.spinBox_rightBScanWindow = QtWidgets.QSpinBox(Dialog)
         self.spinBox_rightBScanWindow.setGeometry(QtCore.QRect(970, 600, 60, 30))
         self.spinBox_rightBScanWindow.setObjectName("spinBox_rightBScanWindow")
-        self.pushButton_showEnFace = QtWidgets.QPushButton(Dialog)
-        self.pushButton_showEnFace.setGeometry(QtCore.QRect(1120, 830, 230, 40))
-        self.pushButton_showEnFace.setObjectName("pushButton_showEnFace")
+        self.pushButton_shwEnFace = QtWidgets.QPushButton(Dialog)
+        self.pushButton_shwEnFace.setGeometry(QtCore.QRect(1120, 830, 230, 40))
+        self.pushButton_shwEnFace.setObjectName("pushButton_shwEnFace")
         self.pushButton_displayAScanAtIntersection = QtWidgets.QPushButton(Dialog)
         self.pushButton_displayAScanAtIntersection.setGeometry(QtCore.QRect(1120, 890, 230, 40))
         self.pushButton_displayAScanAtIntersection.setObjectName("pushButton_displayAScanAtIntersection")
@@ -120,58 +115,58 @@ class Ui_Dialog(object):
         self.gridLayout.setHorizontalSpacing(4)
         self.gridLayout.setVerticalSpacing(2)
         self.gridLayout.setObjectName("gridLayout")
-        self.spinBox_dispersionC2 = QtWidgets.QSpinBox(self.gridLayoutWidget)
-        self.spinBox_dispersionC2.setObjectName("spinBox_dispersionC2")
-        self.gridLayout.addWidget(self.spinBox_dispersionC2, 1, 1, 1, 1)
-        self.label_DisperisonCoefficients_4 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.spinBox_DispCoeffC2 = QtWidgets.QSpinBox(self.gridLayoutWidget)
+        self.spinBox_DispCoeffC2.setObjectName("spinBox_DispCoeffC2")
+        self.gridLayout.addWidget(self.spinBox_DispCoeffC2, 1, 1, 1, 1)
+        self.label_DispCoeffC2 = QtWidgets.QLabel(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
         font.setWeight(75)
-        self.label_DisperisonCoefficients_4.setFont(font)
-        self.label_DisperisonCoefficients_4.setObjectName("label_DisperisonCoefficients_4")
-        self.gridLayout.addWidget(self.label_DisperisonCoefficients_4, 0, 1, 1, 1)
-        self.spinBox_dispersionC1 = QtWidgets.QSpinBox(self.gridLayoutWidget)
-        self.spinBox_dispersionC1.setObjectName("spinBox_dispersionC1")
-        self.gridLayout.addWidget(self.spinBox_dispersionC1, 1, 2, 1, 1)
-        self.spinBox_dispersionC3 = QtWidgets.QSpinBox(self.gridLayoutWidget)
-        self.spinBox_dispersionC3.setObjectName("spinBox_dispersionC3")
-        self.gridLayout.addWidget(self.spinBox_dispersionC3, 1, 0, 1, 1)
-        self.spinBox_dispersionC0 = QtWidgets.QSpinBox(self.gridLayoutWidget)
-        self.spinBox_dispersionC0.setObjectName("spinBox_dispersionC0")
-        self.gridLayout.addWidget(self.spinBox_dispersionC0, 1, 3, 1, 1)
-        self.label_DisperisonCoefficients_3 = QtWidgets.QLabel(self.gridLayoutWidget)
-        self.label_DisperisonCoefficients_3.setEnabled(True)
+        self.label_DispCoeffC2.setFont(font)
+        self.label_DispCoeffC2.setObjectName("label_DispCoeffC2")
+        self.gridLayout.addWidget(self.label_DispCoeffC2, 0, 1, 1, 1)
+        self.spinBox_DispCoeffC1 = QtWidgets.QSpinBox(self.gridLayoutWidget)
+        self.spinBox_DispCoeffC1.setObjectName("spinBox_DispCoeffC1")
+        self.gridLayout.addWidget(self.spinBox_DispCoeffC1, 1, 2, 1, 1)
+        self.spinBox_DispCoeffC3 = QtWidgets.QSpinBox(self.gridLayoutWidget)
+        self.spinBox_DispCoeffC3.setObjectName("spinBox_DispCoeffC3")
+        self.gridLayout.addWidget(self.spinBox_DispCoeffC3, 1, 0, 1, 1)
+        self.spinBox_DispCoeffC0 = QtWidgets.QSpinBox(self.gridLayoutWidget)
+        self.spinBox_DispCoeffC0.setObjectName("spinBox_DispCoeffC0")
+        self.gridLayout.addWidget(self.spinBox_DispCoeffC0, 1, 3, 1, 1)
+        self.label_DispCoeffC3 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.label_DispCoeffC3.setEnabled(True)
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
         font.setWeight(75)
-        self.label_DisperisonCoefficients_3.setFont(font)
-        self.label_DisperisonCoefficients_3.setObjectName("label_DisperisonCoefficients_3")
-        self.gridLayout.addWidget(self.label_DisperisonCoefficients_3, 0, 0, 1, 1)
-        self.label_DisperisonCoefficients_5 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.label_DispCoeffC3.setFont(font)
+        self.label_DispCoeffC3.setObjectName("label_DispCoeffC3")
+        self.gridLayout.addWidget(self.label_DispCoeffC3, 0, 0, 1, 1)
+        self.label_DispCoeffC1 = QtWidgets.QLabel(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
         font.setWeight(75)
-        self.label_DisperisonCoefficients_5.setFont(font)
-        self.label_DisperisonCoefficients_5.setObjectName("label_DisperisonCoefficients_5")
-        self.gridLayout.addWidget(self.label_DisperisonCoefficients_5, 0, 2, 1, 1)
-        self.label_DisperisonCoefficients_6 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.label_DispCoeffC1.setFont(font)
+        self.label_DispCoeffC1.setObjectName("label_DispCoeffC1")
+        self.gridLayout.addWidget(self.label_DispCoeffC1, 0, 2, 1, 1)
+        self.label_DispCoeffC0 = QtWidgets.QLabel(self.gridLayoutWidget)
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
         font.setWeight(75)
-        self.label_DisperisonCoefficients_6.setFont(font)
-        self.label_DisperisonCoefficients_6.setObjectName("label_DisperisonCoefficients_6")
-        self.gridLayout.addWidget(self.label_DisperisonCoefficients_6, 0, 3, 1, 1)
+        self.label_DispCoeffC0.setFont(font)
+        self.label_DispCoeffC0.setObjectName("label_DispCoeffC0")
+        self.gridLayout.addWidget(self.label_DispCoeffC0, 0, 3, 1, 1)
         self.label_ConsoleLog = QtWidgets.QLabel(Dialog)
-        self.label_ConsoleLog.setGeometry(QtCore.QRect(1380, 830, 380, 220))
+        self.label_ConsoleLog.setGeometry(QtCore.QRect(1380, 820, 380, 230))
         self.label_ConsoleLog.setFrameShape(QtWidgets.QFrame.Box)
         self.label_ConsoleLog.setMidLineWidth(1)
         self.label_ConsoleLog.setObjectName("label_ConsoleLog")
         self.label_DisplayOptions_ = QtWidgets.QLabel(Dialog)
-        self.label_DisplayOptions_.setGeometry(QtCore.QRect(1150, 780, 171, 30))
+        self.label_DisplayOptions_.setGeometry(QtCore.QRect(1150, 780, 170, 30))
         font = QtGui.QFont()
         font.setFamily("Verdana Pro Semibold")
         font.setPointSize(10)
@@ -180,7 +175,7 @@ class Ui_Dialog(object):
         self.label_DisplayOptions_.setFont(font)
         self.label_DisplayOptions_.setObjectName("label_DisplayOptions_")
         self.comboBox_windowingOptions = QtWidgets.QComboBox(Dialog)
-        self.comboBox_windowingOptions.setGeometry(QtCore.QRect(1370, 680, 231, 31))
+        self.comboBox_windowingOptions.setGeometry(QtCore.QRect(1370, 680, 230, 30))
         self.comboBox_windowingOptions.setObjectName("comboBox_windowingOptions")
         self.label_WindowingFunction_ = QtWidgets.QLabel(Dialog)
         self.label_WindowingFunction_.setGeometry(QtCore.QRect(1370, 640, 215, 30))
@@ -192,39 +187,43 @@ class Ui_Dialog(object):
         self.label_WindowingFunction_.setFont(font)
         self.label_WindowingFunction_.setObjectName("label_WindowingFunction_")
 
-        # sets all the strings for the labels etc. in the UI
         self.retranslateUi(Dialog)
+        
+        self.close_application_via_button()            
+        
+        self.horizontalSlider_leftBScanWindow.valueChanged['int'].connect(self.spinBox_leftBScanWindow.setValue)
+        self.spinBox_leftBScanWindow.valueChanged['int'].connect(self.horizontalSlider_leftBScanWindow.setValue)
+        self.horizontalSlider_rightBScanWindow.valueChanged['int'].connect(self.spinBox_rightBScanWindow.setValue)
+        self.spinBox_rightBScanWindow.valueChanged['int'].connect(self.horizontalSlider_rightBScanWindow.setValue)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.pushButton_EXIT.setText(_translate("Dialog", "Close"))
+        self.pushButton_close.setText(_translate("Dialog", "Close"))
         self.pushButton_loadOctData.setText(_translate("Dialog", "Load\nOCT\nData"))
-        self.pushButton_showEnFace.setText(_translate("Dialog", "Show en face OCT"))
+        self.pushButton_shwEnFace.setText(_translate("Dialog", "Show en face OCT"))
         self.pushButton_displayAScanAtIntersection.setText(_translate("Dialog", "Display A-scan at Intersection"))
         self.pushButton_displayDispersionCurves.setText(_translate("Dialog", "Plot Dispersion Curves"))
         self.pushButton_displayWindowingFunctions.setText(_translate("Dialog", "Plot Windowing Function"))
         self.pushButton_runReconstruction.setText(_translate("Dialog", "Reconstruct"))
         self.label_DisperisonCoefficients_.setText(_translate("Dialog", "Dispersion Coefficients"))
-        self.label_DisperisonCoefficients_4.setText(_translate("Dialog", "C2"))
-        self.label_DisperisonCoefficients_3.setText(_translate("Dialog", "C3"))
-        self.label_DisperisonCoefficients_5.setText(_translate("Dialog", "C1"))
-        self.label_DisperisonCoefficients_6.setText(_translate("Dialog", "C0"))
+        self.label_DispCoeffC2.setText(_translate("Dialog", "C2"))
+        self.label_DispCoeffC3.setText(_translate("Dialog", "C3"))
+        self.label_DispCoeffC1.setText(_translate("Dialog", "C1"))
+        self.label_DispCoeffC0.setText(_translate("Dialog", "C0"))
         self.label_ConsoleLog.setText(_translate("Dialog", "Console prints"))
         self.label_DisplayOptions_.setText(_translate("Dialog", "Display Options"))
         self.label_WindowingFunction_.setText(_translate("Dialog", "Windowing Function"))
 
-    def closeEvent(self):
-        self.puc
-        print('Closing application...')
-        sys.exit(0)
+    def close_application_via_button(self) :
+        self.pushButton_close.clicked.connect(QtCore.QCoreApplication.instance().quit)
 
 if __name__ == "__main__":
-    
+    import sys
     app = QtWidgets.QApplication(sys.argv)
     Dialog = QtWidgets.QDialog()
     ui = Ui_Dialog()
-    ui.setupUi(Dialog) # kind of a constructor...
-    Dialog.show() # display the UI
+    ui.setupUi(Dialog)
+    Dialog.show()
     sys.exit(app.exec_())
