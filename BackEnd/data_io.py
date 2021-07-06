@@ -126,7 +126,7 @@ class OctDataFileManager() :
         return np.asarray(img_buffer, dtype=dtype_loading) 
                     
                     
+# for testing and debugging purposes
 if __name__ == '__main__' :
-    # Only used for testing and debugging purposes
-    pass
+    print("Running from data_io...")
        

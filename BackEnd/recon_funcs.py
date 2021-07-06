@@ -156,13 +156,15 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         return np.asarray( np.reshape( buffer, (buffer.shape[0] // split_factor, 
                                                split_factor * buffer.shape[1]) ) )
 
+# for testing and debugging purposes
 if __name__ == '__main__' :
-    print("Running")
-    REC = OctReconstructionManager(is_user_file_selection=False, 
-                                     file_path_main=r'D:\PhilippDataAndFiles\4D-OCT\Data\reconstructed_1536x640x645_vol.bin')
-    data = REC.return_oct_cube()
-    recon = REC.reconstruct_buffer(data[:,:,300])
-    print(recon.shape)
-    print(recon.dtype) 
-    plt.imshow(recon)
-    plt.show()
+    print("Running from recon_funcs...")
+    
+    # REC = OctReconstructionManager(is_user_file_selection=False, 
+    #                                  file_path_main=r'D:\PhilippDataAndFiles\4D-OCT\Data\reconstructed_1536x640x645_vol.bin')
+    # data = REC.return_oct_cube()
+    # recon = REC.reconstruct_buffer(data[:,:,300])
+    # print(recon.shape)
+    # print(recon.dtype) 
+    # plt.imshow(recon)
+    # plt.show()
