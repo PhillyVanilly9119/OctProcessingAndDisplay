@@ -158,11 +158,11 @@ class OctReconstructionManager(IO.OctDataFileManager) :
 
 # for testing and debugging purposes
 if __name__ == '__main__' :
-    print("Running from recon_funcs...")
+    print("[INFO:] Running from recon_funcs...")
     
     # REC = OctReconstructionManager(is_user_file_selection=False, 
     #                                  file_path_main=r'D:\PhilippDataAndFiles\4D-OCT\Data\reconstructed_1536x640x645_vol.bin')
-    # data = REC.return_oct_cube()
+    # data = REC.load_oct_data()
     # recon = REC.reconstruct_buffer(data[:,:,300])
     # print(recon.shape)
     # print(recon.dtype) 

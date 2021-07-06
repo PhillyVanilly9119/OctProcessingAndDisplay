@@ -63,7 +63,7 @@ class OctDataFileManager() :
         dims = tuple(int(i) for i in dims_block.split('x'))
         return dims
     
-    def return_oct_cube(self) :
+    def load_oct_data(self) :
         """ returns properly reshaped OCT data (cube) """
         return self.reshape_oct_volume( self.load_selected_bin_file() )
     
@@ -128,5 +128,5 @@ class OctDataFileManager() :
                     
 # for testing and debugging purposes
 if __name__ == '__main__' :
-    print("Running from data_io...")
+    print("[INFO:] Running from data_io...")
        
