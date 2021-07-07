@@ -28,7 +28,7 @@ class UiWindowDialog(object):
         self.REC = OctReconstructionManager()
         # print(self.IO)
         # print(self.REC)
-            
+         
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(1920, 1080)
@@ -77,9 +77,11 @@ class UiWindowDialog(object):
         self.pushButton_loadOctData.setDefault(True)
         self.pushButton_loadOctData.setFlat(False)
         self.pushButton_loadOctData.setObjectName("pushButton_loadOctData")
+        # LEFT = HORIZONTAL B-scan selection spin box
         self.spinBox_leftBScanWindow = QtWidgets.QSpinBox(Dialog)
         self.spinBox_leftBScanWindow.setGeometry(QtCore.QRect(890, 600, 60, 30))
         self.spinBox_leftBScanWindow.setObjectName("spinBox_leftBScanWindow")
+        # RIGHT = VERTICAL B-scan selection spin box
         self.spinBox_rightBScanWindow = QtWidgets.QSpinBox(Dialog)
         self.spinBox_rightBScanWindow.setGeometry(QtCore.QRect(970, 600, 60, 30))
         self.spinBox_rightBScanWindow.setObjectName("spinBox_rightBScanWindow")
@@ -193,6 +195,12 @@ class UiWindowDialog(object):
         self.comboBox_windowingOptions = QtWidgets.QComboBox(Dialog)
         self.comboBox_windowingOptions.setGeometry(QtCore.QRect(1370, 680, 230, 30))
         self.comboBox_windowingOptions.setObjectName("comboBox_windowingOptions")
+        self.comboBox_windowingOptions.addItem("Von-Hann window (default)") # check if 1st item really is default
+        self.comboBox_windowingOptions.addItem("Hamming window")
+        self.comboBox_windowingOptions.addItem("Kaiser-Bessel window")
+        self.comboBox_windowingOptions.addItem("Gaussian (narrow) window") # pass different sigmas as params for different Gaussian-filters
+        self.comboBox_windowingOptions.addItem("Gaussian (medium) window")
+        self.comboBox_windowingOptions.addItem("Gaussian (wide) window ")
         self.label_WindowingFunction_ = QtWidgets.QLabel(Dialog)
         self.label_WindowingFunction_.setGeometry(QtCore.QRect(1370, 640, 215, 30))
         font = QtGui.QFont()
@@ -211,7 +219,7 @@ class UiWindowDialog(object):
         # exit if close button is pressed
         self.close_application_via_button()            
         """
-        1. if and only if oct data cube has been loaded 
+        1. if and only if OCT data cube has been loaded 
             Options:
                 i) display reconstructed selected A-scans
         """
@@ -246,13 +254,27 @@ class UiWindowDialog(object):
     def run_recon_for_current_settings(self) :
         pass
         
-    def _load_oct_data(self):
+    def _load_oct_data(self) -> None :
         """ loads user-selected file containing OCT data and created class-vars raw data buffer and dimensions """
         print("Loading OCT data... ")
         buffer_oct_raw_data = self.IO.load_oct_data() 
         print(f"Loaded selected buffer (shape={buffer_oct_raw_data.shape}) into memory")
         self.buffer_oct_raw_data = buffer_oct_raw_data
         self.dims_buffer_oct_raw_data = buffer_oct_raw_data.shape
+        self.set_spinbox_max_values(self.dims_buffer_oct_raw_data[1], self.dims_buffer_oct_raw_data[2]) 
+        self.set_bScan_slider_max_values(self.dims_buffer_oct_raw_data[1], self.dims_buffer_oct_raw_data[2]) 
+        
+    def set_bScan_slider_max_values(self, x_max, y_max) :
+        """ Sets the values of the horizontal sliders to OCT (x,y) volume dims
+        left = horizontal/y_max, right = vertical/x_max, assuming only pos. int-indexing """
+        self.horizontalSlider_leftBScanWindow.setMaximum(int(y_max))
+        self.horizontalSlider_rightBScanWindow.setMaximum(int(x_max))
+    
+    def set_spinbox_max_values(self, x_max, y_max) :
+        """ Sets the values of the select-boxes to OCT (x,y) volume dims
+        left = horizontal/y_max, right = vertical/x_max, assuming only pos. int-indexing """
+        self.spinBox_leftBScanWindow.setRange(1, int(y_max))
+        self.spinBox_rightBScanWindow.setRange(1, int(x_max))
         
     def show_reconstructed_bScans(self) :
         pass
