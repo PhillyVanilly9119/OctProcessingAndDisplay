@@ -28,23 +28,21 @@ class OctDataFileManager() :
         self.dtype_loading = dtype_loading
         self.is_user_selected_directory = False # label to see if directory was selected
                 
-    def get_oct_meta_data(self) :
+    def _get_oct_meta_data(self) :
         """ makes user select file creates class variables of """   
-        self.file_path_main = self.tk_file_selection()
-        self.dir_main = self.get_main_dir()
+        self.file_path_main = self._tk_file_selection()
+        self.dir_main = self._get_main_dir()
         self.oct_dims, self.oct_ndims = self.get_oct_volume_dims(self.file_path_main)
         
     def _display_meta_data(self):
-        self.get_oct_meta_data()
+        self._get_oct_meta_data()
         print(f'OCT data (dimensions={self.oct_ndims}) shape = {self.oct_dims} ')
  
-    # CONSTR: Gets called by contructor to create class variable with the main-dir
-    def get_main_dir(self) -> str :
+    def _get_main_dir(self) -> str :
         """ returns the directory in which the selected file self.file_path_main is located """ 
         return os.path.join( *(os.path.split(self.file_path_main)[:-1]) )
     
-    # CONSTR: Gets called by contructor to make user select a file containing OCT-data 
-    def tk_file_selection(self) -> str :
+    def _tk_file_selection(self) -> str :
         """ returns full path of a file that the user selects via a GUI/prompt """
         self.is_user_selected_directory = True
         root = Tk()
@@ -53,7 +51,6 @@ class OctDataFileManager() :
         root.destroy()
         return path
     
-    # CONSTR: Gets called by constructor to read-out OCT volume dimensions from *.BIN file name
     def get_oct_volume_dims(self, file_path: str) -> tuple :
         """ reads out and returns the dimensions of an OCT volume from the bin-files' name """
         file_name = os.path.split(file_path)[-1]
@@ -64,7 +61,7 @@ class OctDataFileManager() :
     
     def load_oct_data(self) :
         """ returns properly reshaped OCT data (cube) """
-        self.get_oct_meta_data() # creates <self.file_path_main>, which is needed in < self.load_selected_bin_file()>
+        self._get_oct_meta_data() # creates <self.file_path_main>, which is needed in < self.load_selected_bin_file()>
         return self.reshape_oct_volume( self.load_selected_bin_file() )
     
     def load_selected_bin_file(self) :
