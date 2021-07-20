@@ -295,21 +295,38 @@ class UiWindowDialog(object) :
         self.label_DisplayOptionsWindow_.setText(_translate("Dialog","Display Options Window"))
         self.label_WindowingFunction_.setText(_translate("Dialog", "Windowing Function"))
   
+    def _is_no_oct_data_loaded(self) -> bool :
+        """ evaluate if OCT data been loaded (call _load_oct_data() -method), 
+        which sets self.flag_loaded_oct_data to true 
+        >>> diplays error window if there is no previously loaded data"""
+        if self.flag_loaded_oct_data :
+            return True
+        else :
+            msg_box = QtWidgets.QMessageBox()
+            msg_box.setWindowTitle("Invalid request")
+            msg_box.setText("No Data selected\nPlease load OCT data first")
+            msg_box.setIcon(QtWidgets.QMessageBox.Critical)
+            x = msg_box.exec_()
+            return False
+            
     #### Backend-connected functions ####
     def _load_oct_data(self) -> None :
         """ loads user-selected file containing OCT data and created class-vars raw data buffer and dimensions """
         print("Loading OCT data... ")
         buffer_oct_raw_data = self.IO.load_oct_data() 
-        print(f"Loaded selected buffer (shape={buffer_oct_raw_data.shape}) into memory")
+        print(f"Loaded selected data (shape={buffer_oct_raw_data.shape}) into memory")
         self.buffer_oct_raw_data = buffer_oct_raw_data
         self.dims_buffer_oct_raw_data = buffer_oct_raw_data.shape
+        self.flag_loaded_oct_data = True
         self.set_spinbox_max_values(self.dims_buffer_oct_raw_data[1], self.dims_buffer_oct_raw_data[2]) 
         self.set_bScan_slider_max_values(self.dims_buffer_oct_raw_data[1], self.dims_buffer_oct_raw_data[2]) 
 
-    def overlay_BScans_with_lines(self) :
-        # TODO: works initially but cant update position... Figure it out
+    def overlay_BScans_with_lines(self) -> None :
+        # TODO: update only the overlay line and avoid recalculating the enface image
         # Enface image is a numpy array with ones for now
-        dummy_enface = np.full((400,400), 128)
+        if not self._is_no_oct_data_loaded():
+            return
+        dummy_enface = np.full((self.dims_buffer_oct_raw_data[1], self.dims_buffer_oct_raw_data[2]), 128)
         # dummy_enface = cv2.cvtColor(dummy_enface, cv2.COLOR_GRAY2BGR)
         q_curr_hori_scan = QtGui.QImage(dummy_enface.data.tobytes(), 
                                         dummy_enface.shape[1], dummy_enface.shape[0], 
@@ -354,28 +371,26 @@ class UiWindowDialog(object) :
 
     def run_recon_for_current_settings(self) :
         print("Reconstructing...")
-        # 1 reconstruct B-scans of current pair
-        # create/update horizontal/left scan
-        curr_h_scan_idx = self.spinBox_leftBScanWindow.value()
-        curr_hori_scan = self.REC.reconstruct_buffer(self.buffer_oct_raw_data[:,curr_h_scan_idx,:]) # add disp coeffs and windowing key 
-        curr_hori_scan = cv2.cvtColor(curr_hori_scan , cv2.COLOR_GRAY2BGR)
-        q_curr_hori_scan = QtGui.QImage(curr_hori_scan.data.tobytes(),
-                                              curr_hori_scan.shape[1], curr_hori_scan.shape[0],
-                                              QtGui.QImage.Format_Indexed8)
-        self.LeftBScanWindow.setPixmap( QtGui.QPixmap(q_curr_hori_scan) )
+        # create/update vertical/left scan (dims_buffer_oct_raw_data[1])
+        curr_v_scan_idx = self.spinBox_leftBScanWindow.value()
+        curr_vert_scan = self.REC.reconstruct_buffer(self.buffer_oct_raw_data[:,:,curr_v_scan_idx-1]) # add disp coeffs and windowing key 
+        curr_vert_scan = cv2.cvtColor(curr_vert_scan , cv2.COLOR_BAYER_GR2GRAY)
+        q_curr_vert_scan = QtGui.QImage(curr_vert_scan.data.tobytes(), self.dims_buffer_oct_raw_data[1], 
+                                        self.dims_buffer_oct_raw_data[0], QtGui.QImage.Format_Grayscale8)
+        self.LeftBScanWindow.setPixmap( QtGui.QPixmap(q_curr_vert_scan) )
         self.LeftBScanWindow.setScaledContents(True) 
-        # create/update vertical/right scan
-        curr_v_scan_idx = self.spinBox_rightBScanWindow.value()
-        curr_vert_scan = self.REC.reconstruct_buffer(self.buffer_oct_raw_data[:,:,curr_v_scan_idx]) # add disp coeffs and windowing key 
-        curr_vert_scan = cv2.cvtColor(curr_vert_scan , cv2.COLOR_GRAY2BGR)
-        q_curr_vert_scan = QtGui.QImage(curr_vert_scan.data.tobytes(),
-                                              curr_vert_scan.shape[1], curr_vert_scan.shape[0],
-                                              QtGui.QImage.Format_Indexed8)
-        self.Right_BScanWindow.setPixmap( QtGui.QPixmap(q_curr_vert_scan) )
+        # create/update horizontal/right scan (dims_buffer_oct_raw_data[2])
+        curr_h_scan_idx = self.spinBox_rightBScanWindow.value()
+        curr_hori_scan = self.REC.reconstruct_buffer(self.buffer_oct_raw_data[:,curr_h_scan_idx-1]) # add disp coeffs and windowing key 
+        curr_hori_scan = cv2.cvtColor(curr_hori_scan , cv2.COLOR_BAYER_GR2GRAY)
+        q_curr_hori_scan = QtGui.QImage(curr_hori_scan.data.tobytes(), self.dims_buffer_oct_raw_data[2], 
+                                        self.dims_buffer_oct_raw_data[0], QtGui.QImage.Format_Grayscale8)
+        self.Right_BScanWindow.setPixmap( QtGui.QPixmap(q_curr_hori_scan) )
         self.Right_BScanWindow.setScaledContents(True) # 2 display reconstructed B-scan pain
-        
-        
-        
+        # update lines indicating the B-scan positions in the enface image 
+        self.overlay_BScans_with_lines()
+        # TODO: call "real" enface function here - right now just the dummy function is called 
+          
     def set_bScan_slider_max_values(self, x_max, y_max) :
         """ Sets the values of the horizontal sliders to OCT (x,y) volume dims
         left = horizontal/y_max, right = vertical/x_max, assuming only pos. int-indexing """
