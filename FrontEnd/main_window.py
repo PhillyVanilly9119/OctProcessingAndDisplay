@@ -37,13 +37,31 @@ class UiWindowDialog(object) :
         Dialog.setObjectName("Dialog")
         Dialog.resize(1920, 1080)
         self.LeftBScanWindow = QtWidgets.QLabel(Dialog)
-        self.LeftBScanWindow.setGeometry(QtCore.QRect(30, 20, 920, 560))
+        self.LeftBScanWindow.setGeometry(QtCore.QRect(30, 30, 920, 540))
         self.LeftBScanWindow.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.LeftBScanWindow.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.LeftBScanWindow.setText("")
         self.LeftBScanWindow.setObjectName("LeftBScanWindow")
+        font = QtGui.QFont()
+        font.setFamily("Verdana Pro Semibold")
+        font.setPointSize(8)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_leftBscanDisplayCanvas_ = QtWidgets.QLabel(Dialog)
+        self.label_leftBscanDisplayCanvas_.setGeometry(QtCore.QRect(300, 10, 350, 20))
+        self.label_leftBscanDisplayCanvas_.setFont(font)
+        self.label_leftBscanDisplayCanvas_.setObjectName("label_leftBscanDisplayCanvas_")
+        font = QtGui.QFont()
+        font.setFamily("Verdana Pro Semibold")
+        font.setPointSize(8)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_rightBscanDisplayCanvas_= QtWidgets.QLabel(Dialog)
+        self.label_rightBscanDisplayCanvas_.setGeometry(QtCore.QRect(1260, 10, 370, 20))
+        self.label_rightBscanDisplayCanvas_.setFont(font)
+        self.label_rightBscanDisplayCanvas_.setObjectName("label_rightBscanDisplayCanvas_")
         self.Right_BScanWindow = QtWidgets.QLabel(Dialog)
-        self.Right_BScanWindow.setGeometry(QtCore.QRect(970, 20, 920, 560))
+        self.Right_BScanWindow.setGeometry(QtCore.QRect(970, 30, 920, 540))
         self.Right_BScanWindow.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.Right_BScanWindow.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.Right_BScanWindow.setText("")
@@ -65,6 +83,16 @@ class UiWindowDialog(object) :
         self.DisplayOptionsWindow.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.DisplayOptionsWindow.setText("")
         self.DisplayOptionsWindow.setObjectName("DisplayOptionsWindow")
+        # label for display options window 
+        font = QtGui.QFont()
+        font.setFamily("Verdana Pro Semibold")
+        font.setPointSize(8)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_DisplayOptionsWindow_ = QtWidgets.QLabel(Dialog)
+        self.label_DisplayOptionsWindow_.setGeometry(QtCore.QRect(250, 580, 300, 20))
+        self.label_DisplayOptionsWindow_.setFont(font)
+        self.label_DisplayOptionsWindow_.setObjectName("label_DisplayOptionsWindow_")
         # display widget for square enface image of loaded OCT volume
         self.EnfaceDisplayWindow = QtWidgets.QLabel(Dialog)
         self.EnfaceDisplayWindow.setGeometry(QtCore.QRect(700, 650, 400, 400))
@@ -256,12 +284,15 @@ class UiWindowDialog(object) :
         self.pushButton_displayWindowingFunctions.setText(_translate("Dialog", "Plot Windowing Function"))
         self.pushButton_runReconstruction.setText(_translate("Dialog", "Reconstruct"))
         self.label_DisperisonCoefficients_.setText(_translate("Dialog", "Dispersion Coefficients"))
+        self.label_leftBscanDisplayCanvas_.setText(_translate("Dialog", "Vertical B-scan Display Canvas (red)"))
+        self.label_rightBscanDisplayCanvas_.setText(_translate("Dialog", "Horizontal B-scan Display Canvas (green)"))
         self.label_DispCoeffC2.setText(_translate("Dialog", "C2"))
         self.label_DispCoeffC3.setText(_translate("Dialog", "C3"))
         self.label_DispCoeffC1.setText(_translate("Dialog", "C1"))
         self.label_DispCoeffC0.setText(_translate("Dialog", "C0"))
         self.label_ConsoleLog.setText(_translate("Dialog", "Console prints"))
         self.label_DisplayOptions_.setText(_translate("Dialog", "Display Options"))
+        self.label_DisplayOptionsWindow_.setText(_translate("Dialog","Display Options Window"))
         self.label_WindowingFunction_.setText(_translate("Dialog", "Windowing Function"))
   
     #### Backend-connected functions ####
@@ -322,9 +353,9 @@ class UiWindowDialog(object) :
             print("Enface has already been calculated")
 
     def run_recon_for_current_settings(self) :
-        print("Recon running...")
+        print("Reconstructing...")
         # 1 reconstruct B-scans of current pair
-        # horizontal/left scan
+        # create/update horizontal/left scan
         curr_h_scan_idx = self.spinBox_leftBScanWindow.value()
         curr_hori_scan = self.REC.reconstruct_buffer(self.buffer_oct_raw_data[:,curr_h_scan_idx,:]) # add disp coeffs and windowing key 
         curr_hori_scan = cv2.cvtColor(curr_hori_scan , cv2.COLOR_GRAY2BGR)
@@ -333,7 +364,7 @@ class UiWindowDialog(object) :
                                               QtGui.QImage.Format_Indexed8)
         self.LeftBScanWindow.setPixmap( QtGui.QPixmap(q_curr_hori_scan) )
         self.LeftBScanWindow.setScaledContents(True) 
-        # vertical/right scan
+        # create/update vertical/right scan
         curr_v_scan_idx = self.spinBox_rightBScanWindow.value()
         curr_vert_scan = self.REC.reconstruct_buffer(self.buffer_oct_raw_data[:,:,curr_v_scan_idx]) # add disp coeffs and windowing key 
         curr_vert_scan = cv2.cvtColor(curr_vert_scan , cv2.COLOR_GRAY2BGR)
@@ -357,9 +388,6 @@ class UiWindowDialog(object) :
         self.spinBox_leftBScanWindow.setRange(1, int(y_max))
         self.spinBox_rightBScanWindow.setRange(1, int(x_max))
         
-    def show_reconstructed_bScans(self) :
-        pass
-
     def close_application_via_button(self) :
         self.pushButton_close.clicked.connect(QtCore.QCoreApplication.instance().quit)
 
