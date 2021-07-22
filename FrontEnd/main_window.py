@@ -441,11 +441,7 @@ class UiWindowDialog(object) :
         fig = Figure(figsize=(5, 4), dpi=300)
         canvas = FigureCanvasAgg(fig)
         ax = fig.add_subplot(111)
-        disp = self.REC.create_comp_disp_vec(self.dims_buffer_oct_raw_data[0], 
-                                            (
-                                            self.spinBox_DispCoeffC3.value(), self.spinBox_DispCoeffC2.value(),
-                                            self.spinBox_DispCoeffC1.value(), self.spinBox_DispCoeffC0.value() 
-                                            ), 
+        disp = self.REC.create_comp_disp_vec(self.dims_buffer_oct_raw_data[0], self.disp_coeffs_tuple, 
                                             self.curr_wind_key[0], self.curr_wind_key[1])
         ax.set_title(f"Disperison ({self.curr_wind_key[0]}-windowed)")
         ax.plot(disp.real)
