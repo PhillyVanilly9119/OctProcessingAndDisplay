@@ -10,6 +10,7 @@
 """
 
 # global imports
+import os
 import cv2
 import sys
 import numpy as np
@@ -18,7 +19,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 # custom imports
-sys.path.append(r"D:\PhilippDataAndFiles\Programming\Repositories\OctProcessingAndDisplay\Backend")
+sys.path.append(r"D:\PhilippDataAndFiles\Programming\Repositories\OctProcessingAndDisplay\Backend") # TODO: make relative import 
 from data_io import OctDataFileManager
 from recon_funcs import OctReconstructionManager
 
