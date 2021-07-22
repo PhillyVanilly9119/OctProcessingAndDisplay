@@ -2,7 +2,7 @@
                                         ******
         Author: @Philipp Matten - philipp.matten@meduniwien.ac.at / philipp.matten@gmx.de
                 
-                        Copyright 2020 Medical University of Vienna 
+                        Copyright 2021 Medical University of Vienna 
                                         ******
                                         
         >>> Contains methods and functionality for general OCT data input/output (I/O)     

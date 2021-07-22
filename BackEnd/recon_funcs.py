@@ -2,7 +2,7 @@
                                         ******
         Author: @Philipp Matten - philipp.matten@meduniwien.ac.at / philipp.matten@gmx.de
                 
-                        Copyright 2020 Medical University of Vienna 
+                        Copyright 2021 Medical University of Vienna 
                                         ******
                                          
         >>> Contains methods and functionality for OCT data reconstruction     
@@ -36,11 +36,13 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         data = self.substract_background(buffer)
         return self.apply_dispersion_correction(data, coeffs=coeffs, key=key)
         
-    def apply_post_fft_functions(self, buffer: np.ndarray, samples_crop: int=0) -> np.ndarray:
+    def apply_post_fft_functions(self, buffer: np.ndarray, samples_crop: int=0, is_scale_data_for_disp: bool=False) -> np.ndarray:
         """ method that applies all neccessary post-FFT operations """
         data = self.return_absolute( self.crop_fft_buffer(buffer) )
-        data = self.crop_aScan_samples( data, samples_crop)
-        return self.return_scaled( data ) 
+        data = self.crop_aScan_samples( data, samples_crop )
+        if is_scale_data_for_disp :
+            return self.return_scaled( data ) 
+        return data
     
     def perform_fft(self, buffer: np.ndarray, l_pad=None) -> np.ndarray :
         """ apply fast fourier transform to the entire OCT data buffer """
@@ -78,10 +80,10 @@ class OctReconstructionManager(IO.OctDataFileManager) :
                 background = self.calculate_nDim_independant_ascan_avg( buffer )
         return np.asarray( np.subtract( *self.adjust_dim_for_processing(buffer, background), dtype=self.dtype_raw ) )
         
-    def create_comp_disp_vec(self, a_len: int, coeffs: tuple, window: str='hann') -> np.ndarray :
+    def create_comp_disp_vec(self, a_len: int, coeffs: tuple, window: str='hann', sigma: int=None) -> np.ndarray :
         """ apply (windowed) disperison vector to the entire OCT data buffer """
-        poly_disp = self.create_3rd_order_polynominal(a_len, coeffs )
-        win = self.create_windowing_function(a_len, key=window)
+        poly_disp = self.create_3rd_order_polynominal( a_len, coeffs )
+        win = self.create_windowing_function( a_len, key=window, sigma=sigma )
         x = np.multiply( poly_disp, win )
         y = np.multiply( np.cos( poly_disp ), win )
         disp_vec = x + 1j * y
@@ -91,21 +93,24 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         """ creates real-valued polynominal to correct for dispersion mismatches """
         return np.asarray( np.polyval( coeffs, np.linspace(-0.5, 0.5, a_len) ) )
     
-    def create_windowing_function(self, a_len: int, key='hann', sigma: int=None) -> np.ndarray :
+    def create_windowing_function(self, a_len: int, key='hann', sigma: int=None, is_show_info_prints: bool=False) -> np.ndarray :
         """ Creates a real-valued (float64) vector for i.e. spectrally shaping an A-scan """
         if sigma is None:
             sigma = a_len//10
         if key.lower() == 'hann' :
                 return np.asarray( np.hanning(a_len) )
         elif key.lower() == 'hamm' :
+            if is_show_info_prints :
                 print("[INFO:] Using Hamming-Window - not Hanning-window")    
-                return np.asarray( np.hamming(a_len) ) 
+            return np.asarray( np.hamming(a_len) ) 
         elif key.lower() == 'kaiser' :
+            if is_show_info_prints :
                 print("[INFO:] Using Kaiser-Window - not Hanning-window")
-                return np.asarray( np.kaiser(a_len) )
+            return np.asarray( np.kaiser(a_len, beta=sigma) )
         elif key.lower() == 'gauss' :
+            if is_show_info_prints:
                 print("[INFO:] Using Gaussian-Window - not Hanning-window")
-                return np.asarray( signal.gaussian(a_len, sigma) )
+            return np.asarray( signal.gaussian(a_len, sigma) )
         else : # TODO Check if this works well when it is called from i.e. the GUI 
                 raise ValueError("You have passed an unrecognized key for the windowing-parameter")
                 
