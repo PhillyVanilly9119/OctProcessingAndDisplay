@@ -165,5 +165,9 @@ class OctReconstructionManager(IO.OctDataFileManager) :
 if __name__ == '__main__' :
     print("[INFO:] Running from recon_funcs...")
     REC = OctReconstructionManager()
-    # print(data.shape)
-    # print(data.dtype) 
+    data = REC.load_oct_data()
+    rec_d = REC.reconstruct_buffer(data)
+    print(rec_d.shape)
+    print(rec_d.dtype)
+    plt.imshow(rec_d, cmap='gray', vmin=0, vmax=255)
+    plt.show() 
