@@ -15,25 +15,31 @@ import cv2
 import sys
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 # custom imports
 sys.path.append(r"D:\PhilippDataAndFiles\Programming\Repositories\OctProcessingAndDisplay\Backend") # TODO: make relative import 
-from data_io import OctDataFileManager
 from recon_funcs import OctReconstructionManager
 
 
 class UiWindowDialog(object) :
     def __init__(self) -> None:
         super().__init__()
-        self.IO = OctDataFileManager()
-        self.REC = OctReconstructionManager()
+        self.data_endianness = '>u2'
          
     def setupUi(self, Dialog):
         # create dialog box / GUI-display-canvass
         Dialog.setObjectName("Dialog")
         Dialog.resize(1920, 1080)
+        # check box endian-ness of loaded data
+        self.checkBox_Endianness = QtWidgets.QCheckBox(Dialog)
+        self.checkBox_Endianness.setGeometry(QtCore.QRect(1790, 845, 100, 30))
+        self.checkBox_Endianness.setText("")
+        self.checkBox_Endianness.setObjectName("checkBox_Endianness")
+        self.checkBox_Endianness.setChecked(True)
+        self.checkBox_Endianness.stateChanged.connect(self.set_data_endianness)
         # left-hand-side/vertical B-scan display canvas/widget
         self.Left_BScanWindow = QtWidgets.QLabel(Dialog)
         self.Left_BScanWindow.setGeometry(QtCore.QRect(30, 30, 920, 540))
@@ -151,6 +157,23 @@ class UiWindowDialog(object) :
         self.pushButton_displayWindowingFunctions.setObjectName("pushButton_displayWindowingFunctions")
         self.pushButton_runReconstruction = QtWidgets.QPushButton(Dialog)
         self.pushButton_runReconstruction.setGeometry(QtCore.QRect(1120, 650, 230, 80))
+        # spin box to set n-samples from zero-delay (DC-removal) for cropping of DC
+        self.spinBox_CropDcSamples = QtWidgets.QSpinBox(Dialog)
+        self.spinBox_CropDcSamples.setGeometry(QtCore.QRect(1810, 750, 60, 30))
+        self.spinBox_CropDcSamples.setObjectName("spinBox_CropDcSamples")
+        self.spinBox_CropDcSamples.setRange(0, 200)
+        self.samples_crop_dc = 50
+        self.spinBox_CropDcSamples.setValue(self.samples_crop_dc)
+        # label to crop n-samples from zero-delay (DC-removal)
+        self.label_CropDcSamples_ = QtWidgets.QLabel(Dialog)
+        self.label_CropDcSamples_.setGeometry(QtCore.QRect(1630, 750, 245, 30))
+        font = QtGui.QFont()
+        font.setFamily("Verdana Pro Semibold")
+        font.setPointSize(8)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_CropDcSamples_.setFont(font)
+        self.label_CropDcSamples_.setObjectName("label_CropDcSamples")
         # perform reconstruction for current pair of B-scans
         font = QtGui.QFont()
         font.setFamily("Verdana Pro Semibold")
@@ -277,9 +300,11 @@ class UiWindowDialog(object) :
         # set all style elements in UI
         self.retranslateUi(Dialog)
         
-        #######################################
-        #   ***** SIGNALS AND CONNECTIONS *****
-        #######################################
+        ####################################################
+        # ***** FROM BACKEND / SIGNALS AND CONNECTIONS *****
+        ####################################################
+        self.REC = OctReconstructionManager(self.data_endianness)
+    
         # START PROCESING: load OCT data
         self.pushButton_loadOctData.clicked.connect(self._load_oct_data)
         
@@ -306,18 +331,27 @@ class UiWindowDialog(object) :
         # if values in disp coeff boxes are change -> plot if curves is displayed and tuple with coeffs is updated
         self.spinBox_DispCoeffC0.valueChanged.connect(self.display_current_disp_curves)
         self.spinBox_DispCoeffC0.valueChanged.connect(self.update_disp_coeff_tuple)
+        # self.spinBox_DispCoeffC0.valueChanged.connect(self.run_recon_for_current_settings)
         self.spinBox_DispCoeffC1.valueChanged.connect(self.display_current_disp_curves)
         self.spinBox_DispCoeffC1.valueChanged.connect(self.update_disp_coeff_tuple)
+        # self.spinBox_DispCoeffC1.valueChanged.connect(self.run_recon_for_current_settings)
         self.spinBox_DispCoeffC2.valueChanged.connect(self.display_current_disp_curves)
         self.spinBox_DispCoeffC2.valueChanged.connect(self.update_disp_coeff_tuple)
+        # self.spinBox_DispCoeffC2.valueChanged.connect(self.run_recon_for_current_settings)
         self.spinBox_DispCoeffC3.valueChanged.connect(self.display_current_disp_curves)
         self.spinBox_DispCoeffC3.valueChanged.connect(self.update_disp_coeff_tuple)
+        # self.spinBox_DispCoeffC3.valueChanged.connect(self.run_recon_for_current_settings)
         
-        # couple B-scan display selection elements
+        # if value of sampling for cropping DC changes
+        self.spinBox_CropDcSamples.valueChanged.connect(self.update_dc_crop_samples)
+                
+        # couple B-scan display selection elements & set update dependecy of lines
         self.horizontalSlider_leftBScanWindow.valueChanged['int'].connect(self.spinBox_leftBScanWindow.setValue)
         self.spinBox_leftBScanWindow.valueChanged['int'].connect(self.horizontalSlider_leftBScanWindow.setValue)
+        self.spinBox_leftBScanWindow.valueChanged['int'].connect(self.create_enface_display_widget)
         self.horizontalSlider_rightBScanWindow.valueChanged['int'].connect(self.spinBox_rightBScanWindow.setValue)
         self.spinBox_rightBScanWindow.valueChanged['int'].connect(self.horizontalSlider_rightBScanWindow.setValue)
+        self.spinBox_rightBScanWindow.valueChanged['int'].connect(self.create_enface_display_widget)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
 
@@ -326,12 +360,14 @@ class UiWindowDialog(object) :
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "ODD-UI (Oct Data Display - User Interface)"))
         self.pushButton_close.setText(_translate("Dialog", "Close"))
+        self.checkBox_Endianness.setText(_translate("Dialog", "Data is (IEEE)\nBig Endian"))
         self.pushButton_loadOctData.setText(_translate("Dialog", "Load\nOCT\nData"))
         self.pushButton_showEnFace.setText(_translate("Dialog", "Show en face OCT and update lines"))
         self.pushButton_displayAScanAtIntersection.setText(_translate("Dialog", "Display A-scan at Intersection"))
         self.pushButton_displayDispersionCurves.setText(_translate("Dialog", "Plot Dispersion Curves"))
         self.pushButton_displayWindowingFunctions.setText(_translate("Dialog", "Plot Windowing Function"))
         self.pushButton_runReconstruction.setText(_translate("Dialog", "Reconstruct"))
+        self.label_CropDcSamples_.setText(_translate("Dialog", "Crop DC [samples]"))
         self.label_DisperisonCoefficients_.setText(_translate("Dialog", "Dispersion Coefficients (real + compl.)"))
         self.label_leftBscanDisplayCanvas_.setText(_translate("Dialog", "Vertical B-scan Display Canvas (red)"))
         self.label_rightBscanDisplayCanvas_.setText(_translate("Dialog", "Horizontal B-scan Display Canvas (green)"))
@@ -350,8 +386,8 @@ class UiWindowDialog(object) :
     def _load_oct_data(self) -> None :
         """ loads user-selected file containing OCT data and created class-vars raw data buffer and dimensions """
         print("Loading OCT data... ")
-        buffer_oct_raw_data = self.IO.load_oct_data() 
-        print(f"Loaded selected data (shape={buffer_oct_raw_data.shape}) into memory")
+        buffer_oct_raw_data = self.REC.load_plex_oct_data().astype(np.uint16)
+        print(f"Loaded selected data (shape={buffer_oct_raw_data.shape} and dtype={buffer_oct_raw_data.dtype}) into memory")
         self.buffer_oct_raw_data = buffer_oct_raw_data
         self.dims_buffer_oct_raw_data = buffer_oct_raw_data.shape
         self.flag_loaded_oct_data = True
@@ -364,15 +400,12 @@ class UiWindowDialog(object) :
             return
         # TODO: update only the overlay line and avoid recalculating the enface image
         # TODO: uncomment, once it is implemented
-        # self.display_enface_image()
-        
-        dummy_enface = np.full((self.dims_buffer_oct_raw_data[1], self.dims_buffer_oct_raw_data[2]), 1)
-        # dummy_enface = cv2.cvtColor(dummy_enface, cv2.COLOR_GRAY2BGR)
-        q_curr_hori_scan = QtGui.QImage(dummy_enface.data.tobytes(), 
-                                        dummy_enface.shape[1], dummy_enface.shape[0], 
+        enface = self.calculate_enface()
+        enface_img = QtGui.QImage(enface.data.tobytes(), 
+                                        enface.shape[1], enface.shape[0], 
                                         QtGui.QImage.Format_Indexed8)
         # convert image file into pixmap
-        self.pixmap_image = QtGui.QPixmap(q_curr_hori_scan)
+        self.pixmap_image = QtGui.QPixmap( enface_img )
         # create painter instance with pixmap
         self.painterInstance = QtGui.QPainter(self.pixmap_image)
         self.update_pos_Bscan_indicating_lines(self.spinBox_leftBScanWindow.value(),
@@ -382,19 +415,6 @@ class UiWindowDialog(object) :
         self.EnfaceDisplayWindow.setPixmap(self.pixmap_image)
         self.EnfaceDisplayWindow.setScaledContents(True)
     
-    def update_pos_Bscan_indicating_lines(self, curr_left_idx: int, curr_right_idx: int, 
-                                          line_width: int=1) -> None :
-        """ draws/updates the lines, via getting spinbox/slider values """
-        # set line color and thickness
-        self.v_bScan_line = QtGui.QPen(QtCore.Qt.red)
-        self.v_bScan_line.setWidth(line_width)
-        self.h_bScan_line = QtGui.QPen(QtCore.Qt.green)
-        self.h_bScan_line.setWidth(line_width)
-        # draw lines on canvas
-        self.painterInstance.setPen(self.v_bScan_line)
-        self.painterInstance.drawLine(curr_left_idx, 0, curr_left_idx, 400) 
-        self.painterInstance.setPen(self.h_bScan_line)
-        self.painterInstance.drawLine(0, curr_right_idx, 400, curr_right_idx)
         
     def display_aScans_at_intersection(self) :
         """ displays the raw (left top side canvas) and recostructed (right top side canvas) A-scan 
@@ -442,7 +462,7 @@ class UiWindowDialog(object) :
         canvas = FigureCanvasAgg(fig)
         ax = fig.add_subplot(111)
         disp = self.REC.create_comp_disp_vec(self.dims_buffer_oct_raw_data[0], self.disp_coeffs_tuple, 
-                                            self.curr_wind_key[0], self.curr_wind_key[1])
+                                             self.curr_wind_key[0], self.curr_wind_key[1])
         ax.set_title(f"Disperison ({self.curr_wind_key[0]}-windowed)")
         ax.plot(disp.real)
         ax.plot(disp.imag)
@@ -476,21 +496,14 @@ class UiWindowDialog(object) :
         self.DisplayOptionsWindow.setPixmap( QtGui.QPixmap(disp_img) )
         self.DisplayOptionsWindow.setScaledContents(True) 
 
-    def display_enface_image(self) :
-        # TODO: implement computationally inexpensive version of enface
+    def calculate_enface(self) :
+        # TODO: rethink what params are needed
         if not self.flag_calculate_enface:
             print("Calculating Enface")
-            
-            # self.overlay_BScans_with_lines()
-            
-            # enface = self.REC.reconstruct_buffer(self.buffer_oct_raw_data) # add disp coeffs and windowing key 
-            # q_enface = cv2.cvtColor(enface , cv2.COLOR_GRAY2BGR)
-            # q_enface = QtGui.QImage(q_enface.data.tobytes(), q_enface.shape[1], q_enface.shape[0], QtGui.QImage.Format_Indexed8)
-            # self.EnfaceDisplayWindow.setPixmap( QtGui.QPixmap(q_enface) )
-            # self.EnfaceDisplayWindow.setScaledContents(True) 
-            # self.flag_calculate_enface = True
-        else :
-            print("Enface has already been calculated")
+            self.enface = self.REC.calculate_enface_slow(self.buffer_oct_raw_data)
+            self.flag_calculate_enface = True
+            print("Done!")
+        return self.enface
 
     def run_recon_for_current_settings(self) :
         """ runs recosntruction from backend on cirrently selected pair of B-scans in volume """
@@ -500,7 +513,8 @@ class UiWindowDialog(object) :
         print("Reconstructing...")
         # create/update vertical/left scan (dims_buffer_oct_raw_data[1])
         curr_vert_raw = self.buffer_oct_raw_data[:,:,self.spinBox_leftBScanWindow.value()-1]
-        curr_vert_recon = self.REC.reconstruct_buffer(curr_vert_raw, self.disp_coeffs_tuple, self.curr_wind_key[0])
+        curr_vert_recon = self.REC._run_reconstrution(curr_vert_raw, disp_coeffs=self.disp_coeffs_tuple, 
+                                                      wind_key=self.curr_wind_key[0])
         curr_vert_recon = cv2.cvtColor(curr_vert_recon, cv2.COLOR_BAYER_GR2GRAY)
         img_left_vert = QtGui.QImage(curr_vert_recon.data.tobytes(), self.dims_buffer_oct_raw_data[1], 
                                         self.dims_buffer_oct_raw_data[0], QtGui.QImage.Format_Grayscale8)
@@ -508,7 +522,8 @@ class UiWindowDialog(object) :
         self.Left_BScanWindow.setScaledContents(True) 
         # create/update horizontal/right scan (dims_buffer_oct_raw_data[2])
         curr_hori_raw = self.buffer_oct_raw_data[:,self.spinBox_rightBScanWindow.value()-1]
-        curr_hori_recon = self.REC.reconstruct_buffer(curr_hori_raw, self.disp_coeffs_tuple, self.curr_wind_key[0])
+        curr_hori_recon = self.REC._run_reconstrution(curr_hori_raw, disp_coeffs=self.disp_coeffs_tuple, 
+                                                      wind_key=self.curr_wind_key[0])
         curr_hori_recon = cv2.cvtColor(curr_hori_recon, cv2.COLOR_BAYER_GR2GRAY)
         img_right_hori = QtGui.QImage(curr_hori_recon.data.tobytes(), self.dims_buffer_oct_raw_data[2], 
                                         self.dims_buffer_oct_raw_data[0], QtGui.QImage.Format_Grayscale8)
@@ -516,7 +531,39 @@ class UiWindowDialog(object) :
         self.Right_BScanWindow.setScaledContents(True) # 2 display reconstructed B-scan pain
         # update lines indicating the B-scan positions in the enface image 
         self.create_enface_display_widget()
-        # TODO: call "real" enface function here - right now just the dummy function is called 
+    
+    def set_data_endianness(self) -> None :
+        """ sets the endianness of the raw OCT data and reloads OCT data if it is changed"""
+        # TODO: fix import and reloading of data!!!
+        if self.checkBox_Endianness.isChecked():
+            self.data_endianness = '>u2'
+        else :
+            self.data_endianness = '<u2'
+        msg_box = QtWidgets.QMessageBox()
+        msg_box.setWindowTitle("Please reload data")
+        msg_box.setText("[WARNING:] You're changed the expected endianness!\nPlease reload data!")
+        msg_box.setIcon(QtWidgets.QMessageBox.Critical)
+        x = msg_box.exec_()
+        self.DEC = OctReconstructionManager() # create new instance of Backend / Reconstruction Class
+     
+    def update_pos_Bscan_indicating_lines(self, curr_left_idx: int, curr_right_idx: int, 
+                                          line_width: int=1) -> None :
+        """ draws/updates the lines, via getting spinbox/slider values """
+        # set line color and thickness
+        self.v_bScan_line = QtGui.QPen(QtCore.Qt.red)
+        self.v_bScan_line.setWidth(line_width)
+        self.h_bScan_line = QtGui.QPen(QtCore.Qt.green)
+        self.h_bScan_line.setWidth(line_width)
+        # draw lines on canvas
+        self.painterInstance.setPen(self.v_bScan_line)
+        self.painterInstance.drawLine(curr_left_idx, 0, curr_left_idx, 400) 
+        self.painterInstance.setPen(self.h_bScan_line)
+        self.painterInstance.drawLine(0, curr_right_idx, 400, curr_right_idx)
+        
+    def update_dc_crop_samples(self) -> None :
+        """ Update the samples that should be cropped in the reconstructed B-scan """
+        # TODO: Debug 
+        self.samples_crop_dc = self.spinBox_CropDcSamples.value()
           
     def update_wind_fct_key(self) -> None :
         """ updates the key (class var) with the windowing function for reconstruction """
