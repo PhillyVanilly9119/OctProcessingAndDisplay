@@ -14,7 +14,9 @@ import os
 import cv2
 import numpy as np
 
-from tkinter.filedialog import Tk, askopenfilename 
+from tkinter.filedialog import Tk, askopenfilename
+
+from numpy.core.fromnumeric import reshape 
 
 # custom imports
 
@@ -52,7 +54,8 @@ class OctDataFileManager() :
         return path
     
     def get_oct_volume_dims(self, file_path: str) -> tuple :
-        """ reads out and returns the dimensions of an OCT volume from the bin-files' name """
+        """ reads out and returns the dimensions of an OCT volume from the bin-files' name 
+        the dimensions block has to be of form '..._{aLen}x{bLen}x({cLen})_...' """
         file_name = os.path.split(file_path)[-1]
         dims_list = [s for s in file_name.split('_') if s.find('x') != -1]
         dims_block = ''.join(dims_list)
@@ -62,7 +65,14 @@ class OctDataFileManager() :
     def load_oct_data(self) :
         """ returns properly reshaped OCT data (cube) """
         self._get_oct_meta_data() # creates <self.file_path_main>, which is needed in < self.load_selected_bin_file()>
+        # return self.load_selected_bin_file()
         return self.reshape_oct_volume( self.load_selected_bin_file() )
+        
+    def load_plex_oct_data(self, reshape_dims=(400, 250, 1536)) :
+        """ tenative: methods specially equipped to parse OCT data from PlexElite* """
+        self._get_oct_meta_data()
+        data = self.load_selected_bin_file()
+        return np.asarray( np.swapaxes(np.reshape(data, reshape_dims), 0, -1) ) 
     
     def load_selected_bin_file(self) :
         """ loads and returns bin file that was selected when class instance was created """
@@ -70,18 +80,32 @@ class OctDataFileManager() :
     
     def reshape_oct_volume(self, buffer: np.array) -> np.array :
         """ Returns reshaped volume buffer/np-array acc. to self.dims-shape """
-        return np.asarray( np.reshape(buffer, (self.oct_dims)) )
+        # TODO: reshapes acc. to Plex data 
+        if len(self.oct_dims) == 1 :
+            dims = self.oct_dims
+        elif len(self.oct_dims) == 2 :
+            dims = (self.oct_dims[1], self.oct_dims[0])
+        elif len(self.oct_dims) == 3 :
+            dims = (self.oct_dims[1], self.oct_dims[0], self.oct_dims[2])
+        buffer = np.asarray( np.reshape(buffer, dims) )
+        buffer = np.asarray( np.swapaxes(buffer, 1, 0) )
+        print(buffer.shape)
+        return np.asarray( buffer )
     
     def load_bin_file(self, path_file) -> np.array :
         """ loads and returns data in a numpy.array """
+        # # debug
+        # print(f"Loading data as type: {self.dtype_loading}")
         assert os.path.isfile(path_file), "[CAUTION] path/string doesn't contain a valid file"
         return np.asarray(np.fromfile(path_file, dtype=self.dtype_loading))
     
     # TODO: test all methods from here on out
     def save_as_bin_file(self, buffer: np.array, pre_string: str, dtype_save=np.uint16) -> None :
         """ Saves selected volume in main directory with the established dimensions """
-        # TODO: Rethink how to handle loading/saving dimensions tuples
-        filename_saving = pre_string + self.create_vol_dims_suffix + '.bin'
+        # TODO: Rethink how to handle loading/saving dimensions tuples!!!
+        vol_dims = self.create_vol_dims_suffix
+        print(vol_dims)
+        filename_saving = pre_string + f'_{self.oct_dims[0]}x{self.oct_dims[1]}_' + '.bin'
         _path_saving = os.path.join(self.dir_main, filename_saving)
         print(f"Saving selected volume to file {filename_saving}... ")
         buffer.astype(dtype_save).tofile(_path_saving)
@@ -94,13 +118,14 @@ class OctDataFileManager() :
     def create_vol_dims_suffix(self) -> str :
         """ Creates a string containing the OCT data dimensions for saving """
         if len(self.oct_dims) == 3 :
-            return f"{self.oct_dims[0]}x{self.oct_dims[1]}x{self.oct_dims[2]}"
+            str_dims = f"_{self.oct_dims[0]}x{self.oct_dims[1]}x{self.oct_dims[2]}_"
         elif len(self.oct_dims) == 2 :
-            return f"{self.dims[0]}x{self.oct_dims[1]}"
+            str_dims =  f"_{self.dims[0]}x{self.oct_dims[1]}_"
         elif len(self.dims) == 1 :
-            return f"{self.oct_dims[0]}"
+            str_dims = f"_{self.oct_dims[0]}_"
         else :
             ValueError("Dimensionality is not in range - please check <self.oct_dims>!")
+        return str(str_dims)
     
     def load_image_file(self, file_path, dtype_loading=np.uint8) -> np.array :
         """ Check if it works... """
