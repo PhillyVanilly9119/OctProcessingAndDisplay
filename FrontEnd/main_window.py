@@ -443,7 +443,8 @@ class UiWindowDialog(object) :
         ax = fig.add_subplot(111)
         ax.set_title(f"Reconstructed A-scan at intersection")
         a_scan = self.buffer_oct_raw_data[:, self.spinBox_rightBScanWindow.value()-1, self.spinBox_leftBScanWindow.value()-1]
-        ax.plot(self.REC.reconstruct_buffer(a_scan))
+        ax.plot(self.REC._run_reconstrution(a_scan, disp_coeffs=self.disp_coeffs_tuple, 
+                                                      wind_key=self.curr_wind_key[0]))
         ax.axis('off')
         canvas.draw()
         buffer = canvas.buffer_rgba() # already a RGBA buffer - no conversion nec.
