@@ -11,6 +11,7 @@
 
 # global imports
 import numpy as np
+from numpy.lib.function_base import _calculate_shapes
 from numpy.lib.type_check import imag
 from scipy import signal
 import matplotlib.pyplot as plt
@@ -162,7 +163,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
     #### post-FFT methods ####
     def return_absolute(self, buffer: np.ndarray) -> np.ndarray :
         """ returns absoulte values of a complex OCT data buffer 
-        !! CAUTION!! Sinve we use FFT and NOT iFFT (for log10 to work) return type is a float """
+        !! CAUTION!! Since we use FFT and NOT iFFT (for log10 to work) return type is a float """
         return np.asarray( 20 * np.log10( np.abs(buffer) ), dtype=np.float )
     
     def return_scaled(self, buffer: np.ndarray, black_lvl: int=77, disp_scale: int=66) -> np.ndarray :
@@ -183,9 +184,14 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         return np.asarray( np.reshape( buffer, (buffer.shape[0] // split_factor, 
                                                split_factor * buffer.shape[1]) ) )
         
-    def calculate_enface_slow(self, buffer: np.ndarray, map_key='max') -> np.ndarray:
+    def calculate_enface_for_display(self, buffer: np.ndarray, map_key='max') -> np.ndarray:
         """ ... TBD """
-        enface_map = np.mean(self._run_reconstrution(buffer), axis=(0))
+        if map_key == 'max' :
+            enface_map = np.amax(buffer, axis=(0))
+        elif map_key == 'mean' :
+            enface_map = np.mean(buffer, axis=(0))
+        elif map_key == 'median' :
+            enface_map = np.median(buffer, axis=(0))
         return np.asarray( enface_map, dtype=np.uint8 )
 
 # for testing and debugging purposes
@@ -193,4 +199,4 @@ if __name__ == '__main__' :
     print("[INFO:] Running from recon_funcs...")
     REC = OctReconstructionManager()
     data = REC.load_plex_oct_data().astype('uint16')
-    r = REC._run_reconstrution(data, samples_dc_crop=100)
+    # r = REC._run_reconstrution(data, samples_dc_crop=100)
