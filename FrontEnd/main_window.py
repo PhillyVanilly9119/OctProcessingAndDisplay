@@ -33,6 +33,8 @@ class UiWindowDialog(object) :
         # create dialog box / GUI-display-canvass
         Dialog.setObjectName("Dialog")
         Dialog.resize(1920, 1080)
+        # set validator to only allow interger inputs
+        self.onlyInt = QtGui.QIntValidator()
         # check box endian-ness of loaded data
         self.checkBox_Endianness = QtWidgets.QCheckBox(Dialog)
         self.checkBox_Endianness.setGeometry(QtCore.QRect(1790, 845, 100, 30))
@@ -159,21 +161,40 @@ class UiWindowDialog(object) :
         self.pushButton_runReconstruction.setGeometry(QtCore.QRect(1120, 650, 230, 80))
         # spin box to set n-samples from zero-delay (DC-removal) for cropping of DC
         self.spinBox_CropDcSamples = QtWidgets.QSpinBox(Dialog)
-        self.spinBox_CropDcSamples.setGeometry(QtCore.QRect(1810, 750, 60, 30))
-        self.spinBox_CropDcSamples.setObjectName("spinBox_CropDcSamples")
-        self.spinBox_CropDcSamples.setRange(0, 200)
-        self.samples_crop_dc = 50
-        self.spinBox_CropDcSamples.setValue(self.samples_crop_dc)
+        self.spinBox_CropDcSamples.setGeometry(QtCore.QRect(1825, 750, 45, 25))
+        # self.lineEdit_CropDcSamples = QtWidgets.QLineEdit(Dialog)
+        # self.lineEdit_CropDcSamples.setGeometry(QtCore.QRect(1825, 750, 45, 25))
+        # self.lineEdit_CropDcSamples.setObjectName("lineEdit_CropDcSamples")
+        # self.samples_crop_dc = 50 
+        # self.lineEdit_CropDcSamples.setValidator(self.onlyInt)
         # label to crop n-samples from zero-delay (DC-removal)
         self.label_CropDcSamples_ = QtWidgets.QLabel(Dialog)
-        self.label_CropDcSamples_.setGeometry(QtCore.QRect(1630, 750, 245, 30))
+        self.label_CropDcSamples_.setGeometry(QtCore.QRect(1630, 750, 245, 25))
         font = QtGui.QFont()
         font.setFamily("Verdana Pro Semibold")
-        font.setPointSize(8)
+        font.setPointSize(7)
         font.setBold(True)
         font.setWeight(75)
         self.label_CropDcSamples_.setFont(font)
+        self.label_CropDcSamples_.setEnabled(True)
         self.label_CropDcSamples_.setObjectName("label_CropDcSamples")
+        # # spin box to set n-samples from bottom of A-scan
+        # self.lineEdit_CropHFSamples = QtWidgets.QLineEdit(Dialog)
+        # self.lineEdit_CropHFSamples.setGeometry(QtCore.QRect(1825, 780, 45, 25))
+        # self.lineEdit_CropHFSamples.setObjectName("lineEdit_CropHFSamples")
+        # self.lineEdit_CropHFSamples.setValidator(self.onlyInt)
+        # self.samples_crop_hf = 25
+        # label to set n-samples from bottom of A-scan
+        self.label_CropHfSamples_ = QtWidgets.QLabel(Dialog)
+        self.label_CropHfSamples_.setGeometry(QtCore.QRect(1630, 780, 245, 25))
+        font = QtGui.QFont()
+        font.setFamily("Verdana Pro Semibold")
+        font.setPointSize(7)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_CropHfSamples_.setFont(font)
+        self.label_CropHfSamples_.setEnabled(True)
+        self.label_CropHfSamples_.setObjectName("label_CropHfSamples")
         # perform reconstruction for current pair of B-scans
         font = QtGui.QFont()
         font.setFamily("Verdana Pro Semibold")
@@ -296,6 +317,8 @@ class UiWindowDialog(object) :
         self.flag_loaded_oct_data = False
         self.flag_calculate_enface = False
         self.disp_coeffs_tuple = (0,0,0,0)
+        self.samples_crop_dc = 50
+        self.samples_crop_hf = 20
 
         # set all style elements in UI
         self.retranslateUi(Dialog)
@@ -341,17 +364,16 @@ class UiWindowDialog(object) :
         self.spinBox_DispCoeffC3.valueChanged.connect(self.display_current_disp_curves)
         self.spinBox_DispCoeffC3.valueChanged.connect(self.update_disp_coeff_tuple)
         # self.spinBox_DispCoeffC3.valueChanged.connect(self.run_recon_for_current_settings)
-        
-        # if value of sampling for cropping DC changes
-        self.spinBox_CropDcSamples.valueChanged.connect(self.update_dc_crop_samples)
-                
+                        
         # couple B-scan display selection elements & set update dependecy of lines
         self.horizontalSlider_leftBScanWindow.valueChanged['int'].connect(self.spinBox_leftBScanWindow.setValue)
         self.spinBox_leftBScanWindow.valueChanged['int'].connect(self.horizontalSlider_leftBScanWindow.setValue)
         self.spinBox_leftBScanWindow.valueChanged['int'].connect(self.create_enface_display_widget)
+        self.spinBox_leftBScanWindow.valueChanged['int'].connect(self.update_dc_crop_samples)
         self.horizontalSlider_rightBScanWindow.valueChanged['int'].connect(self.spinBox_rightBScanWindow.setValue)
         self.spinBox_rightBScanWindow.valueChanged['int'].connect(self.horizontalSlider_rightBScanWindow.setValue)
         self.spinBox_rightBScanWindow.valueChanged['int'].connect(self.create_enface_display_widget)
+        self.spinBox_leftBScanWindow.valueChanged['int'].connect(self.update_hf_crop_samples)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
 
@@ -367,7 +389,8 @@ class UiWindowDialog(object) :
         self.pushButton_displayDispersionCurves.setText(_translate("Dialog", "Plot Dispersion Curves"))
         self.pushButton_displayWindowingFunctions.setText(_translate("Dialog", "Plot Windowing Function"))
         self.pushButton_runReconstruction.setText(_translate("Dialog", "Reconstruct"))
-        self.label_CropDcSamples_.setText(_translate("Dialog", "Crop DC [samples]"))
+        self.label_CropDcSamples_.setText(_translate("Dialog", "Crop LF/DC [samples]"))
+        self.label_CropHfSamples_.setText(_translate("Dialog", "Crop HF [samples]"))
         self.label_DisperisonCoefficients_.setText(_translate("Dialog", "Dispersion Coefficients (real + compl.)"))
         self.label_leftBscanDisplayCanvas_.setText(_translate("Dialog", "Vertical B-scan Display Canvas (red)"))
         self.label_rightBscanDisplayCanvas_.setText(_translate("Dialog", "Horizontal B-scan Display Canvas (green)"))
@@ -402,8 +425,8 @@ class UiWindowDialog(object) :
         # TODO: uncomment, once it is implemented
         enface = self.calculate_enface()
         enface_img = QtGui.QImage(enface.data.tobytes(), 
-                                        enface.shape[1], enface.shape[0], 
-                                        QtGui.QImage.Format_Indexed8)
+                                  enface.shape[1], enface.shape[0], 
+                                  QtGui.QImage.Format_Indexed8)
         # convert image file into pixmap
         self.pixmap_image = QtGui.QPixmap( enface_img )
         # create painter instance with pixmap
@@ -422,7 +445,7 @@ class UiWindowDialog(object) :
         if not self._is_no_oct_data_loaded():
             return
         # display raw A-scan at intersection in left-hand-side top canvas
-        fig = Figure(figsize=(5, 4), dpi=300)
+        fig = Figure(figsize=(6, 3.6), dpi=300)
         canvas = FigureCanvasAgg(fig)
         ax = fig.add_subplot(111)
         ax.set_title(f"Raw (unprocessed) A-scan at intersection")
@@ -438,13 +461,14 @@ class UiWindowDialog(object) :
         self.Left_BScanWindow.setPixmap( QtGui.QPixmap(disp_img) )
         self.Left_BScanWindow.setScaledContents(True)
         # display reconstructed A-scan at intersection in right-hand-side top canvas
-        fig = Figure(figsize=(5, 4), dpi=300)
+        fig = Figure(figsize=(6, 3.6), dpi=300)
         canvas = FigureCanvasAgg(fig)
         ax = fig.add_subplot(111)
         ax.set_title(f"Reconstructed A-scan at intersection")
         a_scan = self.buffer_oct_raw_data[:, self.spinBox_rightBScanWindow.value()-1, self.spinBox_leftBScanWindow.value()-1]
-        ax.plot(self.REC._run_reconstrution(a_scan, disp_coeffs=self.disp_coeffs_tuple, 
-                                                      wind_key=self.curr_wind_key[0]))
+        ax.plot(self.REC._run_reconstrution(a_scan, 
+                                            disp_coeffs=self.disp_coeffs_tuple, 
+                                            wind_key=self.curr_wind_key[0]))
         ax.axis('off')
         canvas.draw()
         buffer = canvas.buffer_rgba() # already a RGBA buffer - no conversion nec.
@@ -459,7 +483,7 @@ class UiWindowDialog(object) :
         """ plots graphs of real + compl. parts of disp. comp. curves in DisplayOptionsWindow-Widget """
         if not self._is_no_oct_data_loaded():
             return
-        fig = Figure(figsize=(5, 4), dpi=300)
+        fig = Figure(figsize=(6, 3.6), dpi=300)
         canvas = FigureCanvasAgg(fig)
         ax = fig.add_subplot(111)
         disp = self.REC.create_comp_disp_vec(self.dims_buffer_oct_raw_data[0], self.disp_coeffs_tuple, 
@@ -482,7 +506,7 @@ class UiWindowDialog(object) :
         if not self._is_no_oct_data_loaded():
             return
         self.update_wind_fct_key() # so it doesn't have to get called as a second event signal
-        fig = Figure(figsize=(5, 4), dpi=300)
+        fig = Figure(figsize=(6, 3.6), dpi=300)
         canvas = FigureCanvasAgg(fig)
         ax = fig.add_subplot(111)
         wind = self.REC.create_windowing_function(self.dims_buffer_oct_raw_data[0], self.curr_wind_key[0], self.curr_wind_key[1])
@@ -501,7 +525,7 @@ class UiWindowDialog(object) :
         # TODO: rethink what params are needed
         if not self.flag_calculate_enface:
             print("Calculating Enface")
-            self.enface = self.REC.calculate_enface_slow(self.buffer_oct_raw_data)
+            self.enface = self.REC.calculate_enface_for_display(self.buffer_oct_raw_data)
             self.flag_calculate_enface = True
             print("Done!")
         return self.enface
@@ -562,9 +586,16 @@ class UiWindowDialog(object) :
         self.painterInstance.drawLine(0, curr_right_idx, 400, curr_right_idx)
         
     def update_dc_crop_samples(self) -> None :
-        """ Update the samples that should be cropped in the reconstructed B-scan """
+        """ Update the low-frequency samples that should be cropped in the reconstructed B-scan """
         # TODO: Debug 
-        self.samples_crop_dc = self.spinBox_CropDcSamples.value()
+        # self.samples_crop_dc = self.lineEdit_CropDcSamples.text()
+        print(self.samples_crop_dc)
+        
+    def update_hf_crop_samples(self) -> None :
+        """ Update the high-frequency samples that should be cropped in the reconstructed B-scan """
+        # TODO: Debug 
+        # self.samples_crop_hf = self.lineEdit_CropHFSamples.text()
+        print(self.samples_crop_hf)
           
     def update_wind_fct_key(self) -> None :
         """ updates the key (class var) with the windowing function for reconstruction """
