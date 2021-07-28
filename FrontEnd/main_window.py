@@ -13,6 +13,7 @@
 import os
 import cv2
 import sys
+import time # debug
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib.pyplot as plt # debug
@@ -456,12 +457,15 @@ class UiWindowDialog(object) :
         self.set_bScan_slider_max_values(self.dims_buffer_oct_raw_data[1], self.dims_buffer_oct_raw_data[2]) 
 
     def create_enface_display_widget(self) -> None :
+        print("Entered")
         # NOTE: Enface image is a numpy array with ones for now
         if not self._is_no_oct_data_loaded():
             return
         # TODO: update only the overlay line and avoid recalculating the enface image
         # TODO: uncomment, once it is implemented
+        print(333)
         enface = self.calculate_enface()
+        print(444)
         enface_img = QtGui.QImage(enface.data.tobytes(), 
                                   enface.shape[1], enface.shape[0], 
                                   QtGui.QImage.Format_Indexed8)
@@ -585,11 +589,9 @@ class UiWindowDialog(object) :
                                                        blck_lvl=self.value_black_level,
                                                        is_bg_sub=False,
                                                        show_scaled_data=True)
-        print(curr_vert_recon.shape, self.disp_coeffs_tuple, self.curr_wind_key, self.samples_crop_hf, 
-              self.samples_crop_dc, self.value_scaled_display, self.value_black_level)
-        curr_vert_recon = cv2.cvtColor(curr_vert_recon, cv2.COLOR_BAYER_GR2GRAY)
+        curr_vert_recon = cv2.cvtColor( curr_vert_recon, cv2.COLOR_BAYER_GR2GRAY )
         img_left_vert = QtGui.QImage(curr_vert_recon.data.tobytes(), 
-                                     self.dims_buffer_oct_raw_data[1], self.dims_buffer_oct_raw_data[0], 
+                                     curr_vert_recon.shape[1], curr_vert_recon.shape[0], 
                                      QtGui.QImage.Format_Grayscale8)
         self.Left_BScanWindow.setPixmap( QtGui.QPixmap(img_left_vert) )
         self.Left_BScanWindow.setScaledContents(True) 
@@ -604,10 +606,9 @@ class UiWindowDialog(object) :
                                                        blck_lvl=self.value_black_level,
                                                        is_bg_sub=False,
                                                        show_scaled_data=True)
-        curr_hori_recon = cv2.cvtColor(curr_hori_recon, cv2.COLOR_BAYER_GR2GRAY)
-        print(curr_hori_recon.shape, self.value_black_level, self.value_scaled_display) # debug
+        curr_hori_recon = cv2.cvtColor( curr_hori_recon, cv2.COLOR_BAYER_GR2GRAY )
         img_right_hori = QtGui.QImage(curr_hori_recon.data.tobytes(), 
-                                      self.dims_buffer_oct_raw_data[2], self.dims_buffer_oct_raw_data[0], 
+                                      curr_hori_recon.shape[1], curr_hori_recon.shape[0], 
                                       QtGui.QImage.Format_Grayscale8)
         self.Right_BScanWindow.setPixmap( QtGui.QPixmap(img_right_hori) )
         self.Right_BScanWindow.setScaledContents(True) # 2 display reconstructed B-scan pain
@@ -718,7 +719,7 @@ def run() :
     Dialog = QtWidgets.QDialog()
     ui = UiWindowDialog()
     ui.setupUi(Dialog)
-    # Dialog.showMaximized() # comment in if screen resolution >= Full HD
+    Dialog.showMaximized() # comment in if screen resolution >= Full HD
     Dialog.show()
     sys.exit(app.exec_())
         
