@@ -15,19 +15,20 @@ import cv2
 import sys
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt # debug
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 # custom imports
-sys.path.append(r"D:\PhilippDataAndFiles\Programming\Repositories\OctProcessingAndDisplay\Backend") # TODO: make relative import 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'Backend')))
+# import backend module(s)
 from recon_funcs import OctReconstructionManager
 
 
 class UiWindowDialog(object) :
-    def __init__(self) -> None:
+    def __init__(self, data_endianness = '>u2') -> None:
         super().__init__()
-        self.data_endianness = '>u2'
+        self.data_endianness = data_endianness
          
     def setupUi(self, Dialog):
         # create dialog box / GUI-display-canvass
@@ -76,17 +77,6 @@ class UiWindowDialog(object) :
         self.label_rightBscanDisplayCanvas_.setGeometry(QtCore.QRect(1260, 10, 370, 20))
         self.label_rightBscanDisplayCanvas_.setFont(font)
         self.label_rightBscanDisplayCanvas_.setObjectName("label_rightBscanDisplayCanvas_")
-        # close/end application push button
-        self.pushButton_close = QtWidgets.QPushButton(Dialog)
-        self.pushButton_close.setGeometry(QtCore.QRect(1790, 1010, 100, 35))
-        font = QtGui.QFont()
-        font.setFamily("Neue Haas Grotesk Text Pro")
-        font.setPointSize(11)
-        font.setBold(False)
-        font.setWeight(50)
-        self.pushButton_close.setFont(font)
-        self.pushButton_close.setDefault(True)
-        self.pushButton_close.setObjectName("pushButton_close")
         # display widget for click button options
         self.DisplayOptionsWindow = QtWidgets.QLabel(Dialog)
         self.DisplayOptionsWindow.setGeometry(QtCore.QRect(30, 600, 650, 450))
@@ -111,7 +101,27 @@ class UiWindowDialog(object) :
         self.EnfaceDisplayWindow.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.EnfaceDisplayWindow.setText("")
         self.EnfaceDisplayWindow.setObjectName("EnfaceDisplayWindow")
-        # push button for loading OCT data - with customized font
+        # LEFT = VERTICAL B-scan selection spin box
+        self.spinBox_leftBScanWindow = QtWidgets.QSpinBox(Dialog)
+        self.spinBox_leftBScanWindow.setGeometry(QtCore.QRect(890, 600, 60, 30))
+        self.spinBox_leftBScanWindow.setObjectName("spinBox_leftBScanWindow")
+        # RIGHT = HORIZONTAL B-scan selection spin box
+        self.spinBox_rightBScanWindow = QtWidgets.QSpinBox(Dialog)
+        self.spinBox_rightBScanWindow.setGeometry(QtCore.QRect(970, 600, 60, 30))
+        self.spinBox_rightBScanWindow.setObjectName("spinBox_rightBScanWindow")
+        
+        # close/end application push button
+        self.pushButton_close = QtWidgets.QPushButton(Dialog)
+        self.pushButton_close.setGeometry(QtCore.QRect(1790, 1010, 100, 35))
+        font = QtGui.QFont()
+        font.setFamily("Neue Haas Grotesk Text Pro")
+        font.setPointSize(11)
+        font.setBold(True)
+        font.setWeight(50)
+        self.pushButton_close.setFont(font)
+        self.pushButton_close.setDefault(True)
+        self.pushButton_close.setObjectName("pushButton_close")
+        # button for loading OCT data - with customized font
         self.pushButton_loadOctData = QtWidgets.QPushButton(Dialog)
         self.pushButton_loadOctData.setGeometry(QtCore.QRect(1790, 880, 100, 120))
         font = QtGui.QFont()
@@ -123,26 +133,44 @@ class UiWindowDialog(object) :
         self.pushButton_loadOctData.setDefault(True)
         self.pushButton_loadOctData.setFlat(False)
         self.pushButton_loadOctData.setObjectName("pushButton_loadOctData")
-        # LEFT = VERTICAL B-scan selection spin box
-        self.spinBox_leftBScanWindow = QtWidgets.QSpinBox(Dialog)
-        self.spinBox_leftBScanWindow.setGeometry(QtCore.QRect(890, 600, 60, 30))
-        self.spinBox_leftBScanWindow.setObjectName("spinBox_leftBScanWindow")
-        # RIGHT = HORIZONTAL B-scan selection spin box
-        self.spinBox_rightBScanWindow = QtWidgets.QSpinBox(Dialog)
-        self.spinBox_rightBScanWindow.setGeometry(QtCore.QRect(970, 600, 60, 30))
-        self.spinBox_rightBScanWindow.setObjectName("spinBox_rightBScanWindow")
+        # button to run the reconstruction (partially obsolete)
+        self.pushButton_runReconstruction = QtWidgets.QPushButton(Dialog)
+        self.pushButton_runReconstruction.setGeometry(QtCore.QRect(1120, 650, 230, 80))
+        font = QtGui.QFont()
+        font.setFamily("Verdana Pro Semibold")
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setWeight(75)
+        self.pushButton_runReconstruction.setFont(font)
+        self.pushButton_runReconstruction.setDefault(True)
+        self.pushButton_runReconstruction.setFlat(False)
+        self.pushButton_runReconstruction.setObjectName("pushButton_runReconstruction")
         # enface display push button
+        font = QtGui.QFont()
+        font.setFamily("Neue Haas Grotesk Text Pro")
+        font.setPointSize(6)
+        font.setBold(True)
+        font.setWeight(75)
         self.pushButton_showEnFace = QtWidgets.QPushButton(Dialog)
         self.pushButton_showEnFace.setGeometry(QtCore.QRect(1120, 830, 230, 40))
+        self.pushButton_showEnFace.setFont(font)
         self.pushButton_showEnFace.setObjectName("pushButton_showEnFace")
         # A-scan display push button
         self.pushButton_displayAScanAtIntersection = QtWidgets.QPushButton(Dialog)
         self.pushButton_displayAScanAtIntersection.setGeometry(QtCore.QRect(1120, 890, 230, 40))
+        self.pushButton_displayAScanAtIntersection.setFont(font)
         self.pushButton_displayAScanAtIntersection.setObjectName("pushButton_displayAScanAtIntersection")
         # polynomial function for dispersion correction display  
         self.pushButton_displayDispersionCurves = QtWidgets.QPushButton(Dialog)
         self.pushButton_displayDispersionCurves.setGeometry(QtCore.QRect(1120, 950, 230, 40))
+        self.pushButton_displayDispersionCurves.setFont(font)
         self.pushButton_displayDispersionCurves.setObjectName("pushButton_displayDispersionCurves")
+        # convolutional/windowing functions plot/display 
+        self.pushButton_displayWindowingFunctions = QtWidgets.QPushButton(Dialog)
+        self.pushButton_displayWindowingFunctions.setGeometry(QtCore.QRect(1120, 1010, 230, 40))
+        self.pushButton_displayWindowingFunctions.setFont(font)
+        self.pushButton_displayWindowingFunctions.setObjectName("pushButton_displayWindowingFunctions")
+       
         # left-hand-side widget/vertical B-scan display button  
         self.horizontalSlider_leftBScanWindow = QtWidgets.QSlider(Dialog)
         self.horizontalSlider_leftBScanWindow.setGeometry(QtCore.QRect(700, 600, 160, 30))
@@ -153,58 +181,76 @@ class UiWindowDialog(object) :
         self.horizontalSlider_rightBScanWindow.setGeometry(QtCore.QRect(1050, 600, 160, 30))
         self.horizontalSlider_rightBScanWindow.setOrientation(QtCore.Qt.Horizontal)
         self.horizontalSlider_rightBScanWindow.setObjectName("horizontalSlider_rightBScanWindow")
-        # convolutional/windowing functions plot/display 
-        self.pushButton_displayWindowingFunctions = QtWidgets.QPushButton(Dialog)
-        self.pushButton_displayWindowingFunctions.setGeometry(QtCore.QRect(1120, 1010, 230, 40))
-        self.pushButton_displayWindowingFunctions.setObjectName("pushButton_displayWindowingFunctions")
-        self.pushButton_runReconstruction = QtWidgets.QPushButton(Dialog)
-        self.pushButton_runReconstruction.setGeometry(QtCore.QRect(1120, 650, 230, 80))
+        
         # spin box to set n-samples from zero-delay (DC-removal) for cropping of DC
         self.spinBox_CropDcSamples = QtWidgets.QSpinBox(Dialog)
-        self.spinBox_CropDcSamples.setGeometry(QtCore.QRect(1825, 750, 45, 25))
-        # self.lineEdit_CropDcSamples = QtWidgets.QLineEdit(Dialog)
-        # self.lineEdit_CropDcSamples.setGeometry(QtCore.QRect(1825, 750, 45, 25))
-        # self.lineEdit_CropDcSamples.setObjectName("lineEdit_CropDcSamples")
-        # self.samples_crop_dc = 50 
-        # self.lineEdit_CropDcSamples.setValidator(self.onlyInt)
+        self.spinBox_CropDcSamples.setGeometry(QtCore.QRect(1825, 755, 45, 25))
+        self.samples_crop_dc = 25 
+        self.samples_crop_hf = 0
+        self.spinBox_CropDcSamples.setValue(self.samples_crop_dc)   
         # label to crop n-samples from zero-delay (DC-removal)
         self.label_CropDcSamples_ = QtWidgets.QLabel(Dialog)
-        self.label_CropDcSamples_.setGeometry(QtCore.QRect(1630, 750, 245, 25))
+        self.label_CropDcSamples_.setGeometry(QtCore.QRect(1630, 755, 170, 25))
         font = QtGui.QFont()
         font.setFamily("Verdana Pro Semibold")
-        font.setPointSize(7)
+        font.setPointSize(6)
         font.setBold(True)
         font.setWeight(75)
         self.label_CropDcSamples_.setFont(font)
         self.label_CropDcSamples_.setEnabled(True)
         self.label_CropDcSamples_.setObjectName("label_CropDcSamples")
-        # # spin box to set n-samples from bottom of A-scan
-        # self.lineEdit_CropHFSamples = QtWidgets.QLineEdit(Dialog)
-        # self.lineEdit_CropHFSamples.setGeometry(QtCore.QRect(1825, 780, 45, 25))
-        # self.lineEdit_CropHFSamples.setObjectName("lineEdit_CropHFSamples")
-        # self.lineEdit_CropHFSamples.setValidator(self.onlyInt)
-        # self.samples_crop_hf = 25
+        
+        # spin box to set n-samples from bottom of A-scan
+        self.spinBox_CropHfSamples = QtWidgets.QSpinBox(Dialog)
+        self.spinBox_CropHfSamples.setGeometry(QtCore.QRect(1825, 785, 45, 25))
+        self.samples_crop_hf = 20
+        self.spinBox_CropHfSamples.setValue(self.samples_crop_hf)  
         # label to set n-samples from bottom of A-scan
         self.label_CropHfSamples_ = QtWidgets.QLabel(Dialog)
-        self.label_CropHfSamples_.setGeometry(QtCore.QRect(1630, 780, 245, 25))
+        self.label_CropHfSamples_.setGeometry(QtCore.QRect(1630, 785, 150, 25))
         font = QtGui.QFont()
         font.setFamily("Verdana Pro Semibold")
-        font.setPointSize(7)
+        font.setPointSize(6)
         font.setBold(True)
         font.setWeight(75)
         self.label_CropHfSamples_.setFont(font)
         self.label_CropHfSamples_.setEnabled(True)
         self.label_CropHfSamples_.setObjectName("label_CropHfSamples")
-        # perform reconstruction for current pair of B-scans
+        
+        # spin box to set value for scaling the intensity of reconstructed scans
+        self.spinBox_DisplayScale = QtWidgets.QSpinBox(Dialog)
+        self.spinBox_DisplayScale.setGeometry(QtCore.QRect(1555, 755, 45, 25))
+        self.value_scaled_display = 64
+        self.spinBox_DisplayScale.setValue(self.value_scaled_display)  
+        # label of value for scaling reconstructed display level
+        self.label_DisplayScale_ = QtWidgets.QLabel(Dialog)
+        self.label_DisplayScale_.setGeometry(QtCore.QRect(1370, 755, 150, 25))
         font = QtGui.QFont()
         font.setFamily("Verdana Pro Semibold")
-        font.setPointSize(12)
+        font.setPointSize(6)
         font.setBold(True)
         font.setWeight(75)
-        self.pushButton_runReconstruction.setFont(font)
-        self.pushButton_runReconstruction.setDefault(True)
-        self.pushButton_runReconstruction.setFlat(False)
-        self.pushButton_runReconstruction.setObjectName("pushButton_runReconstruction")
+        self.label_DisplayScale_.setFont(font)
+        self.label_DisplayScale_.setEnabled(True)
+        self.label_DisplayScale_.setObjectName("label_DisplayScale")
+        
+        # spin box to set value for black level in reconstruction
+        self.spinBox_BlackLevel = QtWidgets.QSpinBox(Dialog)
+        self.spinBox_BlackLevel.setGeometry(QtCore.QRect(1555, 785, 45, 25))
+        self.value_black_level = 77
+        self.spinBox_BlackLevel.setValue(self.value_black_level)  
+        # label of value for black level in reconstruction
+        self.label_BlackLevel_ = QtWidgets.QLabel(Dialog)
+        self.label_BlackLevel_.setGeometry(QtCore.QRect(1370, 785, 150, 25))
+        font = QtGui.QFont()
+        font.setFamily("Verdana Pro Semibold")
+        font.setPointSize(6)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_BlackLevel_.setFont(font)
+        self.label_BlackLevel_.setEnabled(True)
+        self.label_BlackLevel_.setObjectName("label_BlackLevel")
+        
         # label for the perform reconstruction for current pair of B-scans button
         self.label_DisperisonCoefficients_ = QtWidgets.QLabel(Dialog)
         self.label_DisperisonCoefficients_.setGeometry(QtCore.QRect(1630, 640, 245, 30))
@@ -218,7 +264,7 @@ class UiWindowDialog(object) :
         self.label_DisperisonCoefficients_.setObjectName("label_DisperisonCoefficients_")
         # grid layout of dispersion correction polynomial coefficients 
         self.gridLayoutWidget = QtWidgets.QWidget(Dialog)
-        self.gridLayoutWidget.setGeometry(QtCore.QRect(1630, 680, 240, 60))
+        self.gridLayoutWidget.setGeometry(QtCore.QRect(1630, 670, 240, 60))
         self.gridLayoutWidget.setObjectName("gridLayoutWidget")
         self.gridLayout = QtWidgets.QGridLayout(self.gridLayoutWidget)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -232,7 +278,7 @@ class UiWindowDialog(object) :
         self.gridLayout.addWidget(self.spinBox_DispCoeffC2, 1, 1, 1, 1)
         self.label_DispCoeffC2 = QtWidgets.QLabel(self.gridLayoutWidget)
         font = QtGui.QFont()
-        font.setPointSize(10)
+        font.setPointSize(7)
         font.setBold(True)
         font.setWeight(75)
         self.label_DispCoeffC2.setFont(font)
@@ -252,32 +298,20 @@ class UiWindowDialog(object) :
         self.gridLayout.addWidget(self.spinBox_DispCoeffC0, 1, 3, 1, 1)
         self.label_DispCoeffC3 = QtWidgets.QLabel(self.gridLayoutWidget)
         self.label_DispCoeffC3.setEnabled(True)
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        font.setBold(True)
-        font.setWeight(75)
         self.label_DispCoeffC3.setFont(font)
         self.label_DispCoeffC3.setObjectName("label_DispCoeffC3")
         self.gridLayout.addWidget(self.label_DispCoeffC3, 0, 0, 1, 1)
         self.label_DispCoeffC1 = QtWidgets.QLabel(self.gridLayoutWidget)
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        font.setBold(True)
-        font.setWeight(75)
         self.label_DispCoeffC1.setFont(font)
         self.label_DispCoeffC1.setObjectName("label_DispCoeffC1")
         self.gridLayout.addWidget(self.label_DispCoeffC1, 0, 2, 1, 1)
         self.label_DispCoeffC0 = QtWidgets.QLabel(self.gridLayoutWidget)
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        font.setBold(True)
-        font.setWeight(75)
         self.label_DispCoeffC0.setFont(font)
         self.label_DispCoeffC0.setObjectName("label_DispCoeffC0")
         self.gridLayout.addWidget(self.label_DispCoeffC0, 0, 3, 1, 1)
         # display box for console print displays
         self.label_ConsoleLog = QtWidgets.QLabel(Dialog)
-        self.label_ConsoleLog.setGeometry(QtCore.QRect(1380, 820, 380, 230))
+        self.label_ConsoleLog.setGeometry(QtCore.QRect(1370, 820, 400, 230))
         self.label_ConsoleLog.setFrameShape(QtWidgets.QFrame.Box)
         self.label_ConsoleLog.setMidLineWidth(1)
         self.label_ConsoleLog.setObjectName("label_ConsoleLog")
@@ -317,8 +351,6 @@ class UiWindowDialog(object) :
         self.flag_loaded_oct_data = False
         self.flag_calculate_enface = False
         self.disp_coeffs_tuple = (0,0,0,0)
-        self.samples_crop_dc = 50
-        self.samples_crop_hf = 20
 
         # set all style elements in UI
         self.retranslateUi(Dialog)
@@ -364,16 +396,20 @@ class UiWindowDialog(object) :
         self.spinBox_DispCoeffC3.valueChanged.connect(self.display_current_disp_curves)
         self.spinBox_DispCoeffC3.valueChanged.connect(self.update_disp_coeff_tuple)
         # self.spinBox_DispCoeffC3.valueChanged.connect(self.run_recon_for_current_settings)
+        
+        # change of values for cropping and adjusting black level and scale for display
+        self.spinBox_CropDcSamples.valueChanged.connect(self.update_dc_crop_samples)
+        self.spinBox_CropHfSamples.valueChanged.connect(self.update_hf_crop_samples)
+        self.spinBox_DisplayScale.valueChanged.connect(self.update_display_scale_value)
+        self.spinBox_BlackLevel.valueChanged.connect(self.update_black_level_value)
                         
         # couple B-scan display selection elements & set update dependecy of lines
         self.horizontalSlider_leftBScanWindow.valueChanged['int'].connect(self.spinBox_leftBScanWindow.setValue)
         self.spinBox_leftBScanWindow.valueChanged['int'].connect(self.horizontalSlider_leftBScanWindow.setValue)
         self.spinBox_leftBScanWindow.valueChanged['int'].connect(self.create_enface_display_widget)
-        self.spinBox_leftBScanWindow.valueChanged['int'].connect(self.update_dc_crop_samples)
         self.horizontalSlider_rightBScanWindow.valueChanged['int'].connect(self.spinBox_rightBScanWindow.setValue)
         self.spinBox_rightBScanWindow.valueChanged['int'].connect(self.horizontalSlider_rightBScanWindow.setValue)
         self.spinBox_rightBScanWindow.valueChanged['int'].connect(self.create_enface_display_widget)
-        self.spinBox_leftBScanWindow.valueChanged['int'].connect(self.update_hf_crop_samples)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
 
@@ -389,6 +425,8 @@ class UiWindowDialog(object) :
         self.pushButton_displayDispersionCurves.setText(_translate("Dialog", "Plot Dispersion Curves"))
         self.pushButton_displayWindowingFunctions.setText(_translate("Dialog", "Plot Windowing Function"))
         self.pushButton_runReconstruction.setText(_translate("Dialog", "Reconstruct"))
+        self.label_BlackLevel_.setText(_translate("Dialog", "Black Level Value"))
+        self.label_DisplayScale_.setText(_translate("Dialog", "Display Scale Factor"))
         self.label_CropDcSamples_.setText(_translate("Dialog", "Crop LF/DC [samples]"))
         self.label_CropHfSamples_.setText(_translate("Dialog", "Crop HF [samples]"))
         self.label_DisperisonCoefficients_.setText(_translate("Dialog", "Dispersion Coefficients (real + compl.)"))
@@ -466,7 +504,7 @@ class UiWindowDialog(object) :
         ax = fig.add_subplot(111)
         ax.set_title(f"Reconstructed A-scan at intersection")
         a_scan = self.buffer_oct_raw_data[:, self.spinBox_rightBScanWindow.value()-1, self.spinBox_leftBScanWindow.value()-1]
-        ax.plot(self.REC._run_reconstrution(a_scan, 
+        ax.plot(self.REC._run_reconstruction(a_scan, 
                                             disp_coeffs=self.disp_coeffs_tuple, 
                                             wind_key=self.curr_wind_key[0]))
         ax.axis('off')
@@ -538,20 +576,39 @@ class UiWindowDialog(object) :
         print("Reconstructing...")
         # create/update vertical/left scan (dims_buffer_oct_raw_data[1])
         curr_vert_raw = self.buffer_oct_raw_data[:,:,self.spinBox_leftBScanWindow.value()-1]
-        curr_vert_recon = self.REC._run_reconstrution(curr_vert_raw, disp_coeffs=self.disp_coeffs_tuple, 
-                                                      wind_key=self.curr_wind_key[0])
+        curr_vert_recon = self.REC._run_reconstruction(curr_vert_raw, 
+                                                       disp_coeffs=self.disp_coeffs_tuple, 
+                                                       wind_key=self.curr_wind_key, 
+                                                       samples_hf_crop=self.samples_crop_hf, 
+                                                       samples_dc_crop=self.samples_crop_dc, 
+                                                       scale_fac=self.value_scaled_display, 
+                                                       blck_lvl=self.value_black_level,
+                                                       is_bg_sub=False,
+                                                       show_scaled_data=True)
+        print(curr_vert_recon.shape, self.disp_coeffs_tuple, self.curr_wind_key, self.samples_crop_hf, 
+              self.samples_crop_dc, self.value_scaled_display, self.value_black_level)
         curr_vert_recon = cv2.cvtColor(curr_vert_recon, cv2.COLOR_BAYER_GR2GRAY)
-        img_left_vert = QtGui.QImage(curr_vert_recon.data.tobytes(), self.dims_buffer_oct_raw_data[1], 
-                                        self.dims_buffer_oct_raw_data[0], QtGui.QImage.Format_Grayscale8)
+        img_left_vert = QtGui.QImage(curr_vert_recon.data.tobytes(), 
+                                     self.dims_buffer_oct_raw_data[1], self.dims_buffer_oct_raw_data[0], 
+                                     QtGui.QImage.Format_Grayscale8)
         self.Left_BScanWindow.setPixmap( QtGui.QPixmap(img_left_vert) )
         self.Left_BScanWindow.setScaledContents(True) 
         # create/update horizontal/right scan (dims_buffer_oct_raw_data[2])
         curr_hori_raw = self.buffer_oct_raw_data[:,self.spinBox_rightBScanWindow.value()-1]
-        curr_hori_recon = self.REC._run_reconstrution(curr_hori_raw, disp_coeffs=self.disp_coeffs_tuple, 
-                                                      wind_key=self.curr_wind_key[0])
+        curr_hori_recon = self.REC._run_reconstruction(curr_hori_raw, 
+                                                       disp_coeffs=self.disp_coeffs_tuple, 
+                                                       wind_key=self.curr_wind_key, 
+                                                       samples_hf_crop=self.samples_crop_hf, 
+                                                       samples_dc_crop=self.samples_crop_dc, 
+                                                       scale_fac=self.value_scaled_display, 
+                                                       blck_lvl=self.value_black_level,
+                                                       is_bg_sub=False,
+                                                       show_scaled_data=True)
         curr_hori_recon = cv2.cvtColor(curr_hori_recon, cv2.COLOR_BAYER_GR2GRAY)
-        img_right_hori = QtGui.QImage(curr_hori_recon.data.tobytes(), self.dims_buffer_oct_raw_data[2], 
-                                        self.dims_buffer_oct_raw_data[0], QtGui.QImage.Format_Grayscale8)
+        print(curr_hori_recon.shape, self.value_black_level, self.value_scaled_display) # debug
+        img_right_hori = QtGui.QImage(curr_hori_recon.data.tobytes(), 
+                                      self.dims_buffer_oct_raw_data[2], self.dims_buffer_oct_raw_data[0], 
+                                      QtGui.QImage.Format_Grayscale8)
         self.Right_BScanWindow.setPixmap( QtGui.QPixmap(img_right_hori) )
         self.Right_BScanWindow.setScaledContents(True) # 2 display reconstructed B-scan pain
         # update lines indicating the B-scan positions in the enface image 
@@ -585,25 +642,43 @@ class UiWindowDialog(object) :
         self.painterInstance.setPen(self.h_bScan_line)
         self.painterInstance.drawLine(0, curr_right_idx, 400, curr_right_idx)
         
+    def update_black_level_value(self) -> None:
+        """ set the value for the black level acc. to spin box value """
+        if not self._is_no_oct_data_loaded():
+            return
+        self.value_black_level = self.spinBox_BlackLevel.value()
+        # print(f"New black level value = {self.value_black_level}") # debug
+        
+    def update_display_scale_value(self) -> None:
+        """ set the value for the black level acc. to spin box value """
+        self.value_scaled_display = self.spinBox_DisplayScale.value()
+        # print(f"New display scale value = {self.value_scaled_display}") # debug
+        
     def update_dc_crop_samples(self) -> None :
         """ Update the low-frequency samples that should be cropped in the reconstructed B-scan """
-        # TODO: Debug 
-        # self.samples_crop_dc = self.lineEdit_CropDcSamples.text()
-        print(self.samples_crop_dc)
+        if not self._is_no_oct_data_loaded():
+            return
+        self.samples_crop_dc = self.spinBox_CropDcSamples.value()
+        # print(f"Cropping {self.samples_crop_dc} low-frequency (DC) samples") # debug
         
     def update_hf_crop_samples(self) -> None :
         """ Update the high-frequency samples that should be cropped in the reconstructed B-scan """
-        # TODO: Debug 
-        # self.samples_crop_hf = self.lineEdit_CropHFSamples.text()
-        print(self.samples_crop_hf)
+        if not self._is_no_oct_data_loaded():
+            return
+        self.samples_crop_hf = self.spinBox_CropHfSamples.value()
+        # print(f"Cropping {self.samples_crop_hf} high-frequency samples") # debug
           
     def update_wind_fct_key(self) -> None :
         """ updates the key (class var) with the windowing function for reconstruction """
+        if not self._is_no_oct_data_loaded():
+            return
         self.curr_wind_key = self.comboBox_windowingOptions.currentData()
         
     def update_disp_coeff_tuple(self) -> None :
         """ updates tuple (clas var) containing the dispersion correction polynominal coefficients 
         according to the current spin box combinations/settings"""
+        if not self._is_no_oct_data_loaded():
+            return
         self.disp_coeffs_tuple = (self.spinBox_DispCoeffC3.value(), self.spinBox_DispCoeffC2.value(),
                                   self.spinBox_DispCoeffC1.value(), self.spinBox_DispCoeffC0.value()) 
     
@@ -643,6 +718,7 @@ def run() :
     Dialog = QtWidgets.QDialog()
     ui = UiWindowDialog()
     ui.setupUi(Dialog)
+    # Dialog.showMaximized() # comment in if screen resolution >= Full HD
     Dialog.show()
     sys.exit(app.exec_())
         

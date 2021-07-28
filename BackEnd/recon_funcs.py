@@ -11,6 +11,7 @@
 
 # global imports
 import numpy as np
+from numpy.core.fromnumeric import shape
 from numpy.lib.function_base import _calculate_shapes
 from numpy.lib.type_check import imag
 from scipy import signal
@@ -30,14 +31,20 @@ class OctReconstructionManager(IO.OctDataFileManager) :
     # ***** high-level processing methods *****
     ###########################################
     # ***** Pre-Processing *****  
-    def perform_pre_fft_functions(self, buffer: np.ndarray, coeffs: tuple, key: str, is_sub_bg: bool=False) -> np.ndarray :
+    def perform_pre_fft_functions(self, 
+                                  buffer: np.ndarray, 
+                                  coeffs: tuple, 
+                                  key: str, 
+                                  is_sub_bg: bool=False) -> np.ndarray :
         """ method that applies pre-FFT operations, with an option for Background Subtraction of OCT raw buffer """
         if is_sub_bg :
             buffer = self.calculate_background_sub(buffer)
         return self.apply_dispersion_correction(buffer, coeffs=coeffs, key=key)
     
     # ***** Fast Fourier-Transform *****
-    def perform_fft(self, buffer: np.ndarray, l_pad=None) -> np.ndarray :
+    def perform_fft(self, 
+                    buffer: np.ndarray, 
+                    l_pad=None) -> np.ndarray :
         """ apply fast fourier transform to the entire OCT data buffer """
         # TODO: check if it can be optimized, so that the FFT length of an A-scan is always powers of 2
         if l_pad is None :
@@ -46,32 +53,42 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         return np.asarray( np.fft.fft( self.pad_buffer_along_axis(buffer, l_pad + buffer.shape[0]), axis=0 ), dtype=np.complex64 )
     
     # ***** Post-Processing *****
-    def perform_post_fft_functions(self, buffer: np.ndarray, crop_dc_smpls: int=0, 
-                                 fac_scale: int=65, black_lvl: int=77, 
-                                 is_scale_data_for_disp: bool=True) -> np.ndarray:
+    def perform_post_fft_functions(self, 
+                                   buffer: np.ndarray, 
+                                   fac_scale: int, 
+                                   black_lvl: int, 
+                                   crop_lf_samples: int, 
+                                   crop_hf_samples: int, 
+                                   is_scale_data_for_disp: bool) -> np.ndarray:
         """ method that applies all neccessary post-FFT operations 
         >>> FFT has to be perfomed first (not iFFT(! due to values/dtype-conversions and log10) """
         data = self.return_absolute( self.crop_fft_buffer(buffer) ) # already cropped compl.-conj.
-        data = self.perform_aScan_cropping( data, crop_dc_smpls )
+        data = self.perform_aScan_cropping( data, crop_lf_samples, crop_hf_samples )
         if is_scale_data_for_disp :
-            return self.return_scaled( data ) 
+            return self.return_scaled( data, black_lvl=black_lvl, disp_scale=fac_scale ) 
         return data
    
     # ***** HIGH-LEVEL METHOD that performs entire OCT-RECONSTRUCTION *****
-    def _run_reconstrution(self, buffer: np.ndarray, disp_coeffs: tuple=(0,0,0,0), 
-                           wind_key: str='hann', is_bg_sub: bool=False,
-                           samples_dc_crop: int=0, scale_fac: int=65, blck_lvl:int=77,
+    def _run_reconstruction(self, 
+                           buffer: np.ndarray, 
+                           disp_coeffs: tuple, 
+                           wind_key: str, 
+                           samples_hf_crop: int=0, # gets set to max A-scan sampling in method
+                           samples_dc_crop: int=0, 
+                           scale_fac: int=65, 
+                           blck_lvl: int=77,
+                           is_bg_sub: bool=False,
                            show_scaled_data: bool=True) -> np.ndarray : 
         """ performs reconstruction on entire passed-in OCT data buffer 
         created as high level method call for easy accessability of OCT capabilities from GUI """
-        buffer = self.perform_pre_fft_functions( buffer, disp_coeffs, wind_key, is_bg_sub)
-        buffer = self.perform_fft( buffer )
-        return self.perform_post_fft_functions(buffer, samples_dc_crop, scale_fac, blck_lvl,
-                                               show_scaled_data)
+        pre_ = self.perform_pre_fft_functions( buffer, disp_coeffs, wind_key, is_bg_sub)
+        post_ = self.perform_fft( pre_ )
+        return self.perform_post_fft_functions( post_, scale_fac, blck_lvl,
+                                               samples_dc_crop, samples_hf_crop, show_scaled_data )
     
-    ##########################################                      
+    ##########################################
     # ***** low-level processing methods *****
-    ##########################################  
+    ##########################################
     def adjust_dim_for_processing(self, buffer: np.ndarray, vector: np.ndarray) -> np.ndarray :
         """ evaluate and prepare buffer and vector for numpy matrix-vector operations """
         if buffer.ndim == 1 :
@@ -99,8 +116,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
     def calculate_nDim_independant_ascan_median(self, buffer: np.ndarray) -> np.ndarray :
         """ calculates and returns median A-scan for i.e. background subtraction """
         return np.asarray( np.median(buffer, axis=tuple(range(1, buffer.ndim)), dtype=self.dtype_raw) )
-    
-        
+       
     def create_3rd_order_polynominal(self, a_len: int, coeffs: tuple) -> np.ndarray :
         """ creates real-valued polynominal to correct for dispersion mismatches """
         return np.asarray( np.polyval( coeffs, np.linspace(-0.5, 0.5, a_len) ) )
@@ -172,13 +188,16 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         buffer[buffer < 0] = 0
         return np.asarray(buffer , dtype=self.dtype_recon )
     
-    def perform_aScan_cropping(self, buffer: np.ndarray, samples_crop: int) -> np.ndarray :
-        """ returns buffer which has the first n-th samples (samples_crop) removed ("remoce DC") """
-        return np.asarray( buffer[samples_crop:] )
+    def perform_aScan_cropping(self, buffer: np.ndarray, lf_smpls_crop: int, hf_smpls_crop: int) -> np.ndarray :
+        """ returns (reconstructed) buffer which has low- and high-frequency components/samples cropped """
+        assert lf_smpls_crop < buffer.shape[0], "DC pixels to crop must be less than A-scan sampling length"
+        assert hf_smpls_crop < buffer.shape[0], "High-Frequency pixels to crop must be less than A-scan sampling length"
+        assert lf_smpls_crop + hf_smpls_crop < buffer.shape[0], "Amount of cropping pixels must be less than A-scan sampling length"
+        return np.asarray( buffer[lf_smpls_crop:buffer.shape[0]-hf_smpls_crop] )
         
     #### Auxiliary functions ####
     # TODO: test the functions
-    def apply_spectral_splitting(self, buffer: np.ndarray, split_factor: int) : # WORKS only buffers
+    def apply_spectral_splitting(self, buffer: np.ndarray, split_factor: int) : # WORKS only with B-scans / buffers
         """ Reshapes B-Scan-like data buffer according to spectral splitting requirements """
         # TODO: rework for general use case, aka for OCT volume data not just B-scans/buffer
         return np.asarray( np.reshape( buffer, (buffer.shape[0] // split_factor, 
@@ -197,6 +216,13 @@ class OctReconstructionManager(IO.OctDataFileManager) :
 # for testing and debugging purposes
 if __name__ == '__main__' :
     print("[INFO:] Running from recon_funcs...")
-    REC = OctReconstructionManager()
+    REC = OctReconstructionManager(dtype_loading='>u2')
     data = REC.load_plex_oct_data().astype('uint16')
-    # r = REC._run_reconstrution(data, samples_dc_crop=100)
+    print(data.shape, data.dtype)
+    # plt.plot(data[:,0,0])
+    # plt.show()
+    raw = data[:,:,100]
+    rec = REC._run_reconstruction( raw, disp_coeffs=(0,0,0,0), wind_key='hann', samples_dc_crop=100, samples_hf_crop=50)
+    # rec = np.resize(rec, (1000, 1000))
+    plt.imshow(rec)
+    plt.show()
