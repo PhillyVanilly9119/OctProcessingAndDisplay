@@ -71,6 +71,7 @@ class OctDataFileManager() :
     def load_plex_oct_data(self, reshape_dims=(400, 250, 1536)) :
         """ tenative: methods specially equipped to parse OCT data from PlexElite* """
         self._get_oct_meta_data()
+        # reshape_dims = self.get_oct_volume_dims(self.file_path_main)[0]
         data = self.load_selected_bin_file()
         return np.asarray( np.swapaxes(np.reshape(data, reshape_dims), 0, -1) ) 
     

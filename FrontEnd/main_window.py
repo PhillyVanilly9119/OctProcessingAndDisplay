@@ -574,7 +574,6 @@ class UiWindowDialog(object) :
 
     def run_recon_for_current_settings(self) :
         """ runs recosntruction from backend on cirrently selected pair of B-scans in volume """
-        # TODO: implement enface calculation (in backend and then call here)
         if not self._is_no_oct_data_loaded():
             return
         print("Reconstructing...")
