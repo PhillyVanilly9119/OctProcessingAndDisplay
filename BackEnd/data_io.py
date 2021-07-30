@@ -14,7 +14,7 @@ import os
 import cv2
 import numpy as np
 
-from tkinter.filedialog import Tk, askopenfilename
+from tkinter.filedialog import Tk, askopenfilename, askdirectory
 
 from numpy.core.fromnumeric import reshape 
 
@@ -50,6 +50,14 @@ class OctDataFileManager() :
         root = Tk()
         root.withdraw()
         path = askopenfilename(title='Please select a file')
+        root.destroy()
+        return path
+    
+    def _tk_folder_selection(self) -> str:
+        """ returns path to main folder of what the user selects via a GUI/prompt """
+        root = Tk()
+        root.withdraw()
+        path = askdirectory(title='Please select a file')
         root.destroy()
         return path
     
@@ -111,10 +119,6 @@ class OctDataFileManager() :
         print(f"Saving selected volume to file {filename_saving}... ")
         buffer.astype(dtype_save).tofile(_path_saving)
         print("[DONE] Saving selected volume!")
-        
-    def get_list_of_only_files(self) -> None :
-        """ returns a list of all files in the self.main_dir """
-        self.file_list_full = [f for f in os.listdir(self.dir_main) if os.path.isfile(os.path.join(self.dir_main, f))]
     
     def create_vol_dims_suffix(self) -> str :
         """ Creates a string containing the OCT data dimensions for saving """
