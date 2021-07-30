@@ -457,15 +457,10 @@ class UiWindowDialog(object) :
         self.set_bScan_slider_max_values(self.dims_buffer_oct_raw_data[1], self.dims_buffer_oct_raw_data[2]) 
 
     def create_enface_display_widget(self) -> None :
-        print("Entered")
-        # NOTE: Enface image is a numpy array with ones for now
+        """ creates an enface image with overlayed lines indicating the current B-scans and/or updates the display """
         if not self._is_no_oct_data_loaded():
             return
-        # TODO: update only the overlay line and avoid recalculating the enface image
-        # TODO: uncomment, once it is implemented
-        print(333)
         enface = self.calculate_enface()
-        print(444)
         enface_img = QtGui.QImage(enface.data.tobytes(), 
                                   enface.shape[1], enface.shape[0], 
                                   QtGui.QImage.Format_Indexed8)
@@ -475,8 +470,7 @@ class UiWindowDialog(object) :
         self.painterInstance = QtGui.QPainter(self.pixmap_image)
         self.update_pos_Bscan_indicating_lines(self.spinBox_leftBScanWindow.value(),
                                                self.spinBox_rightBScanWindow.value())
-        self.painterInstance.end() # instance has to be deleted after every update
-        # set pixmap as displayed output on label widget
+        self.painterInstance.end() # painter instance has to be deleted after every update
         self.EnfaceDisplayWindow.setPixmap(self.pixmap_image)
         self.EnfaceDisplayWindow.setScaledContents(True)
     
@@ -487,7 +481,7 @@ class UiWindowDialog(object) :
         if not self._is_no_oct_data_loaded():
             return
         # display raw A-scan at intersection in left-hand-side top canvas
-        fig = Figure(figsize=(6, 3.6), dpi=300)
+        fig = Figure(figsize=(6, 3.6), dpi=300) # dimensions roughly taken from widget/canvas
         canvas = FigureCanvasAgg(fig)
         ax = fig.add_subplot(111)
         ax.set_title(f"Raw (unprocessed) A-scan at intersection")
@@ -718,7 +712,7 @@ def run() :
     Dialog = QtWidgets.QDialog()
     ui = UiWindowDialog()
     ui.setupUi(Dialog)
-    Dialog.showMaximized() # comment in if screen resolution >= Full HD
+    # Dialog.showMaximized() # comment in if screen resolution >= Full HD
     Dialog.show()
     sys.exit(app.exec_())
         
