@@ -196,7 +196,13 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         return np.asarray( buffer[lf_smpls_crop:buffer.shape[0]-hf_smpls_crop] )
         
     #### Auxiliary functions ####
-    # TODO: test the functions
+    def drop_every_nth_aScan(self, data: np.ndarray, n_drop: int) -> np.ndarray :
+        """ reduces the A-scan sampling, via dropping out every n-th sample
+        ATTENTION: method asserts that first dimension of array is A-scan-dimension
+        NOTE: this happens at a loss of axial resolution in the x-space (reconstructed scan) """
+        return np.asarray( data[::n_drop], dtype=data.dtype )
+    
+    # TODO: test the following functions
     def apply_spectral_splitting(self, buffer: np.ndarray, split_factor: int) : # WORKS only with B-scans / buffers
         """ Reshapes B-Scan-like data buffer according to spectral splitting requirements """
         # TODO: rework for general use case, aka for OCT volume data not just B-scans/buffer
@@ -215,14 +221,12 @@ class OctReconstructionManager(IO.OctDataFileManager) :
 
 # for testing and debugging purposes
 if __name__ == '__main__' :
-    print("[INFO:] Running from recon_funcs...")
+    print("[INFO:] Running from recon_funcs.py ...")
     REC = OctReconstructionManager(dtype_loading='>u2')
-    data = REC.load_plex_oct_data().astype('uint16')
+    data = REC.load_oct_data()
     print(data.shape, data.dtype)
-    # plt.plot(data[:,0,0])
+    # raw = data[:,:,100]
+    # rec = REC._run_reconstruction( raw, disp_coeffs=(0,0,0,0), wind_key='hann', samples_dc_crop=100, samples_hf_crop=50)
+    # # rec = np.resize(rec, (1000, 1000))
+    # plt.imshow(rec)
     # plt.show()
-    raw = data[:,:,100]
-    rec = REC._run_reconstruction( raw, disp_coeffs=(0,0,0,0), wind_key='hann', samples_dc_crop=100, samples_hf_crop=50)
-    # rec = np.resize(rec, (1000, 1000))
-    plt.imshow(rec)
-    plt.show()
