@@ -5,7 +5,7 @@
                         Copyright 2020 Medical University of Vienna 
                                         ******
                                          
-        python -m PyQt5.uic.pyuic -x "D:\PhilippDataAndFiles\Programming\Repositories\OctProcessingAndDisplay\FrontEnd\main_window.ui" -o "D:\PhilippDataAndFiles\Programming\Repositories\OctProcessingAndDisplay\FrontEnd\main_window.py"
+        python -m PyQt5.uic.pyuic -x "D:\PhilippDataAndFiles\Programming\Repositories\OctProcessingAndDisplay\FrontEnd\main_window.ui" -o "D:\PhilippDataAndFiles\Programming\Repositories\OctProcessingAndDisplay\FrontEnd\main_window_v2.py"
      
                                 
 """
