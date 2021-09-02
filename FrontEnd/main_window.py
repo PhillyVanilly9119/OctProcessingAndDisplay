@@ -44,7 +44,12 @@ class UiWindowDialog(object) :
         ###############
         # check box endian-ness of loaded data
         self.checkBox_Endianness = QtWidgets.QCheckBox(Dialog)
-        self.checkBox_Endianness.setGeometry(QtCore.QRect(1790, 845, 100, 30))
+        self.checkBox_Endianness.setGeometry(QtCore.QRect(1780, 760, 110, 50))
+        font = QtGui.QFont()
+        font.setFamily("Neue Haas Grotesk Text Pro")
+        font.setPointSize(5)
+        font.setWeight(75)
+        self.checkBox_Endianness.setFont(font)
         self.checkBox_Endianness.setText("")
         self.checkBox_Endianness.setObjectName("checkBox_Endianness")
         self.checkBox_Endianness.setChecked(True)
@@ -88,9 +93,21 @@ class UiWindowDialog(object) :
         self.pushButton_runReconstruction.setDefault(True)
         self.pushButton_runReconstruction.setFlat(False)
         self.pushButton_runReconstruction.setObjectName("pushButton_runReconstruction")
+
+        ## Push Buttons for Display Options
+        # label for box with display options
+        self._label_DisplayOptions = QtWidgets.QLabel(Dialog)
+        self._label_DisplayOptions.setGeometry(QtCore.QRect(1350, 680, 180, 30))
+        font = QtGui.QFont()
+        font.setFamily("Verdana Pro Semibold")
+        font.setPointSize(8)
+        font.setBold(True)
+        font.setWeight(75)
+        self._label_DisplayOptions.setFont(font)
+        self._label_DisplayOptions.setAlignment(QtCore.Qt.AlignCenter)
+        self._label_DisplayOptions.setObjectName("_label_DisplayOptions")
         # enface display push button
         font = QtGui.QFont()
-        # font.setFamily("Neue Haas Grotesk Text Pro")
         font.setPointSize(6)
         font.setBold(True)
         font.setWeight(75)
@@ -182,16 +199,15 @@ class UiWindowDialog(object) :
         self.DisplayOptionsWindow.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.DisplayOptionsWindow.setText("")
         self.DisplayOptionsWindow.setObjectName("DisplayOptionsWindow")
-        # label for display options window 
-        font = QtGui.QFont()
-        font.setFamily("Verdana Pro Semibold")
-        font.setPointSize(8)
-        font.setBold(True)
-        font.setWeight(75)
-        self._label_DisplayOptionsWindow = QtWidgets.QLabel(Dialog)
-        self._label_DisplayOptionsWindow.setFont(font)
-        self._label_DisplayOptionsWindow.setGeometry(QtCore.QRect(21350, 680, 180, 30))
-        self._label_DisplayOptionsWindow.setObjectName("_label_DisplayOptionsWindow")
+        
+        # Square Enface Display Options
+        # display widget for square enface image of loaded OCT volume
+        self.EnfaceDisplayWindow = QtWidgets.QLabel(Dialog)
+        self.EnfaceDisplayWindow.setGeometry(QtCore.QRect(640, 600, 350, 350))
+        self.EnfaceDisplayWindow.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.EnfaceDisplayWindow.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.EnfaceDisplayWindow.setText("")
+        self.EnfaceDisplayWindow.setObjectName("EnfaceDisplayWindow")
         
         ######################################################################################
         # OCT volume dimension display grid layout #
@@ -199,7 +215,7 @@ class UiWindowDialog(object) :
         # define grid
         self.gridLayoutWidget_OctVolumeDims = QtWidgets.QWidget(Dialog)
         self.gridLayoutWidget_OctVolumeDims.setEnabled(True)
-        self.gridLayoutWidget_OctVolumeDims.setGeometry(QtCore.QRect(1545, 720, 340, 50))
+        self.gridLayoutWidget_OctVolumeDims.setGeometry(QtCore.QRect(1550, 690, 340, 60))
         self.gridLayoutWidget_OctVolumeDims.setObjectName("gridLayoutWidget_OctVolumeDims")
         self.gridLayout_OctVolumeDims = QtWidgets.QGridLayout(self.gridLayoutWidget_OctVolumeDims)
         self.gridLayout_OctVolumeDims.setContentsMargins(0, 0, 0, 0)
@@ -207,62 +223,46 @@ class UiWindowDialog(object) :
         self.gridLayout_OctVolumeDims.setVerticalSpacing(2)
         self.gridLayout_OctVolumeDims.setObjectName("gridLayout_OctVolumeDims")
         
-        # text display field A-scan length display
-        self.textEdit_aScanLength = QtWidgets.QTextEdit(self.gridLayoutWidget_OctVolumeDims)
+        # spinbox for A-scan length display
+        self.spinBox_aScanLength = QtWidgets.QSpinBox(self.gridLayoutWidget_OctVolumeDims)
         font = QtGui.QFont()
-        font.setBold(True)
-        font.setWeight(75)
-        self.textEdit_aScanLength.setFont(font)
-        self.textEdit_aScanLength.setObjectName("textEdit_2")
-        self.gridLayout_OctVolumeDims.addWidget(self.textEdit_aScanLength, 1, 2, 1, 1)
-        # label A-scan length display
-        self._label_aScanLength = QtWidgets.QLabel(self.gridLayoutWidget_OctVolumeDims)
-        self._label_aScanLength.setEnabled(True)
-        font = QtGui.QFont()
+        font.setFamily("Verdana Pro Semibold")
         font.setPointSize(6)
         font.setBold(True)
         font.setWeight(75)
+        self.spinBox_aScanLength.setEnabled(False)
+        self.spinBox_aScanLength.setObjectName("_spinBox_aScanLength")
+        self.gridLayout_OctVolumeDims.addWidget(self.spinBox_aScanLength, 2, 1, 1, 1)
+        # label A-scan length display
+        self._label_aScanLength = QtWidgets.QLabel(self.gridLayoutWidget_OctVolumeDims)
+        self._label_aScanLength.setEnabled(True)
         self._label_aScanLength.setFont(font)
         self._label_aScanLength.setObjectName("_label_aScanLength")
         self.gridLayout_OctVolumeDims.addWidget(self._label_aScanLength, 1, 1, 1, 1)
         
-        # text display field B-scan length display
-        self.textEdit_bScanLength = QtWidgets.QTextEdit(self.gridLayoutWidget_OctVolumeDims)
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setWeight(75)
-        self.textEdit_bScanLength.setFont(font)
-        self.textEdit_bScanLength.setObjectName("textEdit_2")
-        self.gridLayout_OctVolumeDims.addWidget(self.textEdit_bScanLength, 2, 2, 1, 1)
+        # spinbox for b-scan length display
+        self.spinBox_bScanLength = QtWidgets.QSpinBox(self.gridLayoutWidget_OctVolumeDims)
+        self.spinBox_bScanLength.setEnabled(False)
+        self.spinBox_bScanLength.setObjectName("_spinBox_bScanLength")
+        self.gridLayout_OctVolumeDims.addWidget(self.spinBox_bScanLength, 2, 2, 1, 1)
         # label B-scan length display
         self._label_bScanLength = QtWidgets.QLabel(self.gridLayoutWidget_OctVolumeDims)
         self._label_bScanLength.setEnabled(True)
-        font = QtGui.QFont()
-        font.setPointSize(6)
-        font.setBold(True)
-        font.setWeight(75)
         self._label_bScanLength.setFont(font)
         self._label_bScanLength.setObjectName("_label_bScanLength")
-        self.gridLayout_OctVolumeDims.addWidget(self._label_bScanLength, 0, 1, 1, 1)
+        self.gridLayout_OctVolumeDims.addWidget(self._label_bScanLength, 1, 2, 1, 1)
         
-        # text display field C-scan length display
-        self.textEdit_cScanLength = QtWidgets.QTextEdit(self.gridLayoutWidget_OctVolumeDims)
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setWeight(75)
-        self.textEdit_cScanLength.setFont(font)
-        self.textEdit_cScanLength.setObjectName("textEdit_2")
-        self.gridLayout_OctVolumeDims.addWidget(self.textEdit_cScanLength, 2, 3, 1, 1)
+        # spinbox for c-scan length display
+        self.spinBox_cScanLength = QtWidgets.QSpinBox(self.gridLayoutWidget_OctVolumeDims)
+        self.spinBox_cScanLength.setEnabled(False)
+        self.spinBox_bScanLength.setObjectName("_spinBox_cScanLength")
+        self.gridLayout_OctVolumeDims.addWidget(self.spinBox_cScanLength, 2, 3, 1, 1)
         # label C-scan length display
         self._label_cScanLength = QtWidgets.QLabel(self.gridLayoutWidget_OctVolumeDims)
         self._label_cScanLength.setEnabled(True)
-        font = QtGui.QFont()
-        font.setPointSize(6)
-        font.setBold(True)
-        font.setWeight(75)
         self._label_cScanLength.setFont(font)
         self._label_cScanLength.setObjectName("_label_cScanLength")
-        self.gridLayout_OctVolumeDims.addWidget(self._label_cScanLength, 0, 2, 1, 1) 
+        self.gridLayout_OctVolumeDims.addWidget(self._label_cScanLength, 1, 3, 1, 1) 
         
         ######################################################################################
         # Dispersion coefficient grid layout #
@@ -404,20 +404,7 @@ class UiWindowDialog(object) :
         self._label_CropHfSamples.setGeometry(QtCore.QRect(1550, 960, 150, 25))
         self._label_CropHfSamples.setFont(font)
         self._label_CropHfSamples.setEnabled(True)
-        self._label_CropHfSamples.setObjectName("label_CropHfSamples")
-        
-        
-        
-        
-        # display widget for square enface image of loaded OCT volume
-        self.EnfaceDisplayWindow = QtWidgets.QLabel(Dialog)
-        self.EnfaceDisplayWindow.setGeometry(QtCore.QRect(640, 600, 350, 350))
-        self.EnfaceDisplayWindow.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.EnfaceDisplayWindow.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.EnfaceDisplayWindow.setText("")
-        self.EnfaceDisplayWindow.setObjectName("EnfaceDisplayWindow")
-    
-        
+        self._label_CropHfSamples.setObjectName("label_CropHfSamples")        
 
         
         # display box for console print displays
@@ -432,7 +419,7 @@ class UiWindowDialog(object) :
         ####################
         # label/head line for windowing function selection field
         self._label_WindowingFunction = QtWidgets.QLabel(Dialog)
-        self._label_WindowingFunction.setGeometry(QtCore.QRect(1550, 800, 220, 30))
+        self._label_WindowingFunction.setGeometry(QtCore.QRect(1550, 770, 220, 30))
         font = QtGui.QFont()
         font.setFamily("Verdana Pro Semibold")
         font.setPointSize(8)
@@ -444,7 +431,7 @@ class UiWindowDialog(object) :
         self._label_WindowingFunction.setAlignment(QtCore.Qt.AlignCenter)
         # Windowing options drop down menu
         self.comboBox_windowingOptions = QtWidgets.QComboBox(Dialog)
-        self.comboBox_windowingOptions.setGeometry(QtCore.QRect(1550, 830, 220, 30))
+        self.comboBox_windowingOptions.setGeometry(QtCore.QRect(1550, 800, 220, 30))
         self.comboBox_windowingOptions.setObjectName("comboBox_windowingOptions")
         # NOTE: all box items contain data in form a list of a string (wind-key) and a int (value filter-sigma)
         self.comboBox_windowingOptions.addItem("Von-Hann window (default)", ["Hann", 1])
@@ -458,18 +445,6 @@ class UiWindowDialog(object) :
         self.flag_loaded_oct_data = False
         self.flag_calculate_enface = False
         self.disp_coeffs_tuple = (0,0,0,0)
-        
-        # label for box with display options
-        self.label_DisplayOptions_ = QtWidgets.QLabel(Dialog)
-        self.label_DisplayOptions_.setGeometry(QtCore.QRect(1150, 780, 170, 30))
-        font = QtGui.QFont()
-        font.setFamily("Verdana Pro Semibold")
-        font.setPointSize(10)
-        font.setBold(True)
-        font.setWeight(75)
-        self.label_DisplayOptions_.setFont(font)
-        self.label_DisplayOptions_.setObjectName("label_DisplayOptions_")
-        # drop-down menu for selection of different windowing-functions
 
         # set all style elements in UI
         self.retranslateUi(Dialog)
@@ -539,18 +514,11 @@ class UiWindowDialog(object) :
         self.pushButton_close.setText(_translate("Dialog", "Close"))
         self.checkBox_Endianness.setText(_translate("Dialog", "Data is (IEEE)\nBig Endian"))
         self.pushButton_loadOctData.setText(_translate("Dialog", "Load\nOCT\nData"))
-        self.pushButton_showEnFace.setText(_translate("Dialog", "Show en face OCT and update lines"))
-        self.pushButton_displayAScanAtIntersection.setText(_translate("Dialog", "Display A-scan at Intersection"))
-        self.pushButton_displayDispersionCurves.setText(_translate("Dialog", "Plot Dispersion Curves"))
-        self.pushButton_displayWindowingFunctions.setText(_translate("Dialog", "Plot Windowing Function"))
         self.pushButton_runReconstruction.setText(_translate("Dialog", "Reconstruct"))
-        self._label_BlackLevel.setText(_translate("Dialog", "Black Level Value"))
-        self._label_DisplayScale.setText(_translate("Dialog", "Display Scale Factor"))
-        self._label_CropDcSamples.setText(_translate("Dialog", "Crop LF/DC [samples]"))
-        self._label_CropHfSamples.setText(_translate("Dialog", "Crop HF [samples]"))
-        self._label_DisperisonCoefficients.setText(_translate("Dialog", "Dispersion Coefficients"))
-        self._label_leftBscanDisplayCanvas.setText(_translate("Dialog", "Vertical B-scan Display Canvas (red)"))
-        self._label_rightBscanDisplayCanvas.setText(_translate("Dialog", "Horizontal B-scan Display Canvas (green)"))
+        self.pushButton_showEnFace.setText(_translate("Dialog", "Show Enface"))
+        self.pushButton_displayDispersionCurves.setText(_translate("Dialog", "Show Dispersion"))
+        self.pushButton_displayWindowingFunctions.setText(_translate("Dialog", "Show Windowing"))
+        self.pushButton_displayAScanAtIntersection.setText(_translate("Dialog", "Show A-scans"))
         self._label_DispCoeffC2.setText(_translate("Dialog", "C2"))
         self._label_DispCoeffC3.setText(_translate("Dialog", "C3"))
         self._label_DispCoeffC1.setText(_translate("Dialog", "C1"))
@@ -559,14 +527,15 @@ class UiWindowDialog(object) :
         self._label_bScanLength.setText(_translate("Dialog", "B-Length"))
         self._label_cScanLength.setText(_translate("Dialog", "C-Length"))
         self.label_ConsoleLog.setText(_translate("Dialog", "Console prints"))
-        # self.label_OctVolumeDimensionWindow_.setText(_translate("Dialog", "Determined raw OCT volume dimensions"))
-        # self.label_OctVolumeDimensionWindow_.adjustSize() # rework those with grids in a final layout
-        self.label_DisplayOptions_.setText(_translate("Dialog", "Display Options"))
-        # self.label_DisplayOptions_.adjustSize() 
-        self._label_DisplayOptionsWindow.setText(_translate("Dialog","Display Options Window"))
-        # self._label_DisplayOptionsWindow.adjustSize()
+        self._label_BlackLevel.setText(_translate("Dialog", "Black Level Value"))
+        self._label_DisplayOptions.setText(_translate("Dialog", "Display Options"))
+        self._label_CropHfSamples.setText(_translate("Dialog", "Crop HF [samples]"))
+        self._label_DisplayScale.setText(_translate("Dialog", "Display Scale Factor"))
+        self._label_CropDcSamples.setText(_translate("Dialog", "Crop LF/DC [samples]"))
         self._label_WindowingFunction.setText(_translate("Dialog", "Windowing Function"))
-        # self._label_WindowingFunction.adjustSize()
+        self._label_DisperisonCoefficients.setText(_translate("Dialog", "Dispersion Coefficients"))
+        self._label_leftBscanDisplayCanvas.setText(_translate("Dialog", "Vertical B-scan Display Canvas (red)"))
+        self._label_rightBscanDisplayCanvas.setText(_translate("Dialog", "Horizontal B-scan Display Canvas (green)"))
 
             
     """     ****** SIGNALS ******
