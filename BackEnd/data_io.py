@@ -70,36 +70,25 @@ class OctDataFileManager() :
         dims = tuple(int(i) for i in dims_block.split('x'))
         return dims, len(dims)
     
-    def load_oct_data(self) :
+    def load_oct_data(self, dtype=np.uint16) -> np.ndarray :
         """ returns properly reshaped OCT data (cube) """
-        self._get_oct_meta_data() # creates <self.file_path_main>, which is needed in < self.load_selected_bin_file()>
-        # return self.load_selected_bin_file()
-        return self.reshape_oct_volume( self.load_selected_bin_file() )
-        
-    def load_plex_oct_data(self, reshape_dims=(400, 250, 1536)) :
-        """ tenative: methods specially equipped to parse OCT data from PlexElite* """
-        self._get_oct_meta_data()
-        # reshape_dims = self.get_oct_volume_dims(self.file_path_main)[0]
-        data = self.load_selected_bin_file()
-        return np.asarray( np.swapaxes(np.reshape(data, reshape_dims), 0, -1) ) 
-    
+        self._get_oct_meta_data() # creates <self.file_path_main>, which is needed in < self.load_selected_bin_file() >
+        return np.asarray( self.reshape_oct_volume(self.load_selected_bin_file()), dtype=dtype )
+            
     def load_selected_bin_file(self) :
-        """ loads and returns bin file that was selected when class instance was created """
+        """ loads and returns bin file that was selected when class instance was created 
+        NOTE: always loads data as uint"""
         return self.load_bin_file( self.file_path_main )
     
     def reshape_oct_volume(self, buffer: np.array) -> np.array :
         """ Returns reshaped volume buffer/np-array acc. to self.dims-shape """
-        # TODO: reshapes acc. to Plex data 
         if len(self.oct_dims) == 1 :
             dims = self.oct_dims
         elif len(self.oct_dims) == 2 :
             dims = (self.oct_dims[1], self.oct_dims[0])
         elif len(self.oct_dims) == 3 :
-            dims = (self.oct_dims[1], self.oct_dims[0], self.oct_dims[2])
-        buffer = np.asarray( np.reshape(buffer, dims) )
-        buffer = np.asarray( np.swapaxes(buffer, 1, 0) )
-        print(buffer.shape)
-        return np.asarray( buffer )
+            dims = (self.oct_dims[2], self.oct_dims[1], self.oct_dims[0])
+        return np.asarray( np.swapaxes(np.reshape(buffer, dims), 0, -1) )
     
     def load_bin_file(self, path_file) -> np.array :
         """ loads and returns data in a numpy.array """
