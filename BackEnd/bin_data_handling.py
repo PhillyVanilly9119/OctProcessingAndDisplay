@@ -13,11 +13,13 @@
 import re
 import os
 import sys
+from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 
 # custom imports
 import data_io as IO
+from recon_funcs import OctReconstructionManager as REC
 
 
 class OctRawDataManager(IO.OctDataFileManager) :
@@ -44,7 +46,12 @@ class OctRawDataManager(IO.OctDataFileManager) :
     
     def _load_bins_in_dir(self) -> np.array :
         """ """
-        # print( [f for f in os.path.join(self.main_folder, f) )
+        data_stack = []
+        for file in tqdm(self._get_sorted_scan_list()) :
+            c_file = os.path.join(self.main_folder, file)
+            c_buffer = np.reshape(np.fromfile(c_file, dtype='<u2'), (5120, 500))
+            data_stack.append(c_buffer)
+        return np.swapaxes(np.asarray(data_stack), 1, 0)
                                   
     def sort_scan_list_after_nums(self, file_list_numbers) -> list :
         """ """
@@ -63,11 +70,10 @@ class OctRawDataManager(IO.OctDataFileManager) :
             return True
         else :
             return False
+
         
 def run():
     RDM = OctRawDataManager()
-    RDM._load_bins_in_dir()
-    # print(RDM.check_if_files_complete())
     
 if __name__ == "__main__" :
     run()
