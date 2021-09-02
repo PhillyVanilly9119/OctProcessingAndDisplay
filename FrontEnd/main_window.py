@@ -13,7 +13,6 @@
 import os
 import cv2
 import sys
-import time # debug
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib.pyplot as plt # debug
@@ -22,14 +21,19 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 # custom imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'Backend')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'Config')))
+
 # import backend module(s)
 from recon_funcs import OctReconstructionManager
+from gui_config_parsing import GuiConfigDataManager as GCONF
 
 
 class UiWindowDialog(object) :
     def __init__(self, data_endianness = '>u2') -> None:
         super().__init__()
         self.data_endianness = data_endianness
+        # WORKS! TODO: rethink the place where the config parameters are supposed to be parsed
+        self.gui_layout_config = GCONF('config_gui_layout').load_json_file() # create a new config file
          
     def setupUi(self, Dialog):
         
@@ -237,6 +241,7 @@ class UiWindowDialog(object) :
         self._label_aScanLength = QtWidgets.QLabel(self.gridLayoutWidget_OctVolumeDims)
         self._label_aScanLength.setEnabled(True)
         self._label_aScanLength.setFont(font)
+        self._label_aScanLength.setAlignment(QtCore.Qt.AlignCenter)
         self._label_aScanLength.setObjectName("_label_aScanLength")
         self.gridLayout_OctVolumeDims.addWidget(self._label_aScanLength, 1, 1, 1, 1)
         
@@ -249,6 +254,7 @@ class UiWindowDialog(object) :
         self._label_bScanLength = QtWidgets.QLabel(self.gridLayoutWidget_OctVolumeDims)
         self._label_bScanLength.setEnabled(True)
         self._label_bScanLength.setFont(font)
+        self._label_bScanLength.setAlignment(QtCore.Qt.AlignCenter)
         self._label_bScanLength.setObjectName("_label_bScanLength")
         self.gridLayout_OctVolumeDims.addWidget(self._label_bScanLength, 1, 2, 1, 1)
         
@@ -261,6 +267,7 @@ class UiWindowDialog(object) :
         self._label_cScanLength = QtWidgets.QLabel(self.gridLayoutWidget_OctVolumeDims)
         self._label_cScanLength.setEnabled(True)
         self._label_cScanLength.setFont(font)
+        self._label_cScanLength.setAlignment(QtCore.Qt.AlignCenter)
         self._label_cScanLength.setObjectName("_label_cScanLength")
         self.gridLayout_OctVolumeDims.addWidget(self._label_cScanLength, 1, 3, 1, 1) 
         
@@ -824,7 +831,7 @@ def run() :
     Dialog = QtWidgets.QDialog()
     ui = UiWindowDialog()
     ui.setupUi(Dialog)
-    # Dialog.showMaximized() # comment in if screen resolution >= Full HD
+    Dialog.showMaximized() # comment in if screen resolution >= Full HD
     Dialog.show()
     sys.exit(app.exec_())
         

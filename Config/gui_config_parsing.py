@@ -21,12 +21,15 @@ class GuiConfigDataManager() :
     def __init__(self, filename) -> None :
         self.full_file_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'Config', filename + '.json'))
 
-    def load_json_file(self) :
+    def load_json_file(self) -> dict :
         """ returns a dict containing the json file"""
         with open(self.full_file_path) as json_file :
             json_object = json.load(json_file)
             json_file.close()
         return json_object
+    
+    def load_json_file_from_user(self) -> dict :
+        pass
 
 
 # for testing and debugging purposes
