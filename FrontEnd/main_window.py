@@ -410,7 +410,7 @@ class UiWindowDialog(object) :
         # spinbox c0 coeff
         self.spinBox_DispCoeffC0 = QtWidgets.QSpinBox(self.gridLayoutWidget_dispCoeffs)
         self.spinBox_DispCoeffC0.setEnabled(True)
-        self.spinBox_DispCoeffC0.setRange(-150, 150)
+        self.spinBox_DispCoeffC0.setRange(-256, 256)
         self.spinBox_DispCoeffC0.setObjectName("spinBox_DispCoeffC0")
         self.spinBox_DispCoeffC0.setStyleSheet("background: rgb(231, 243, 251);"
                                               "border-style: outset;"
@@ -444,6 +444,7 @@ class UiWindowDialog(object) :
         self.spinBox_DispCoeffC1 = QtWidgets.QSpinBox(self.gridLayoutWidget_dispCoeffs)
         self.spinBox_DispCoeffC1.setStyleSheet("color: rgb(231, 243, 251)")
         self.spinBox_DispCoeffC1.setEnabled(True)
+        self.spinBox_DispCoeffC1.setRange(-256, 256)
         self.spinBox_DispCoeffC1.setStyleSheet("background: rgb(231, 243, 251);"
                                               "border-style: outset;"
                                                "border-width: 2px;"
@@ -469,6 +470,7 @@ class UiWindowDialog(object) :
         # spinbox c2 coeff
         self.spinBox_DispCoeffC2 = QtWidgets.QSpinBox(self.gridLayoutWidget_dispCoeffs)
         self.spinBox_DispCoeffC2.setObjectName("spinBox_DispCoeffC2")
+        self.spinBox_DispCoeffC2.setRange(-256, 256)
         self.spinBox_DispCoeffC2.setStyleSheet("background: rgb(231, 243, 251);"
                                               "border-style: outset;"
                                                "border-width: 2px;"
@@ -491,13 +493,14 @@ class UiWindowDialog(object) :
         ## c_3
         # spinbox c2 coeff
         self.spinBox_DispCoeffC3 = QtWidgets.QSpinBox(self.gridLayoutWidget_dispCoeffs)
+        self.spinBox_DispCoeffC3.setObjectName("spinBox_DispCoeffC3")
+        self.spinBox_DispCoeffC3.setRange(-256, 256)
         self.spinBox_DispCoeffC3.setStyleSheet("background: rgb(231, 243, 251);"
                                               "border-style: outset;"
                                                "border-width: 2px;"
                                                "border-radius: 3px;"
                                                "border-color: grey;"
                                                "padding: 2px;")
-        self.spinBox_DispCoeffC3.setObjectName("spinBox_DispCoeffC3")
         self.gridLayout.addWidget(self.spinBox_DispCoeffC3, 2, 0, 1, 1)
         # label c3 coeff
         self._label_DispCoeffC3 = QtWidgets.QLabel(self.gridLayoutWidget_dispCoeffs)
