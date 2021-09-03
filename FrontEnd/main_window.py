@@ -15,7 +15,7 @@ import cv2
 import sys
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
-# import matplotlib.pyplot as plt # debug
+import matplotlib.pyplot as plt # debug
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
@@ -26,6 +26,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 
 # import backend module(s)
 from recon_funcs import OctReconstructionManager
 from gui_config_parsing import GuiConfigDataManager as GCONF
+from set_design_of_gui_elements import RgbColorCodeManager as RGB # TODO: adjust to correct class after implemention os done
 
 
 class UiWindowDialog(object) :

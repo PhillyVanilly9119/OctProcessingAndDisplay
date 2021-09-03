@@ -211,22 +211,21 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         
     def calculate_enface_for_display(self, buffer: np.ndarray, map_key='max') -> np.ndarray:
         """ ... TBD """
+        buffer = np.subtract( *self.adjust_dim_for_processing(buffer, np.mean(buffer, axis=(1,buffer.ndim-1))) )
         if map_key == 'max' :
             enface_map = np.amax(buffer, axis=(0))
         elif map_key == 'mean' :
             enface_map = np.mean(buffer, axis=(0))
         elif map_key == 'median' :
             enface_map = np.median(buffer, axis=(0))
-        return np.asarray( enface_map, dtype=np.uint8 )
+        return np.asarray( enface_map, dtype=np.uint16 )
+
 
 # for testing and debugging purposes
 if __name__ == '__main__' :
     print("[INFO:] Running from recon_funcs.py ...")
     REC = OctReconstructionManager(dtype_loading='>u2')
     data = REC.load_oct_data()
-    print(data.shape, data.dtype)
-    # raw = data[:,:,100]
-    # rec = REC._run_reconstruction( raw, disp_coeffs=(0,0,0,0), wind_key='hann', samples_dc_crop=100, samples_hf_crop=50)
-    # # rec = np.resize(rec, (1000, 1000))
+    rec = REC.calculate_enface_for_display(data)
     # plt.imshow(rec)
     # plt.show()
