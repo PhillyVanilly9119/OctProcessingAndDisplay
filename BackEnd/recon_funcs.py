@@ -2,7 +2,7 @@
                                         ******
         Author: @Philipp Matten - philipp.matten@meduniwien.ac.at / philipp.matten@gmx.de
                 
-                        Copyright 2021 Medical University of Vienna 
+                                    Copyright 2021 
                                         ******
                                          
         >>> Contains methods and functionality for OCT data reconstruction     

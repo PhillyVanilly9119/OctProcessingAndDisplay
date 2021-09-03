@@ -2,7 +2,7 @@
                                         ******
         Author: @Philipp Matten - philipp.matten@meduniwien.ac.at / philipp.matten@gmx.de
                 
-                        Copyright 2021 Medical University of Vienna 
+                                    Copyright 2021 
                                         ******
                                          
         >>> Contains methods and functionality for OCT raw data file handling and conversion     
@@ -12,14 +12,14 @@
 # global imports
 import re
 import os
-import sys
+# import sys
 from tqdm import tqdm
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt #debug
 
 # custom imports
 import data_io as IO
-from recon_funcs import OctReconstructionManager as REC
+# from recon_funcs import OctReconstructionManager as REC
 
 
 class OctRawDataManager(IO.OctDataFileManager) :
@@ -54,7 +54,7 @@ class OctRawDataManager(IO.OctDataFileManager) :
         return np.swapaxes(np.asarray(data_stack), 1, 0)
                                   
     def sort_scan_list_after_nums(self, file_list_numbers) -> list :
-        """ """
+        """ returns sorted list numbers in file names """
         def natural_keys(text):
             def atoi(text):
                 return int(text) if text.isdigit() else text
