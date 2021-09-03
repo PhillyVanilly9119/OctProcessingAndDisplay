@@ -2,7 +2,7 @@
                                         ******
         Author: @Philipp Matten - philipp.matten@meduniwien.ac.at / philipp.matten@gmx.de
                 
-                        Copyright 2021 Medical University of Vienna 
+                                    Copyright 2021 
                                         ******
                                          
         >>> main file for OCT Recon GUI creation, methods and handling     
@@ -15,7 +15,7 @@ import cv2
 import sys
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
-import matplotlib.pyplot as plt # debug
+# import matplotlib.pyplot as plt # debug
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
@@ -40,6 +40,7 @@ class UiWindowDialog(object) :
         # create dialog box / GUI-display-canvass
         Dialog.setObjectName("Dialog")
         Dialog.resize(1920, 1030)
+        Dialog.setStyleSheet("background: rgb(17, 29, 78);")
         # set validator to only allow interger inputs
         self.onlyInt = QtGui.QIntValidator()
         
@@ -57,6 +58,7 @@ class UiWindowDialog(object) :
         self.checkBox_Endianness.setText("")
         self.checkBox_Endianness.setObjectName("checkBox_Endianness")
         self.checkBox_Endianness.setChecked(True)
+        self.checkBox_Endianness.setStyleSheet("color: rgb(231, 243, 251)")
         self.checkBox_Endianness.stateChanged.connect(self.set_data_endianness)
         
         ######################################################################################
@@ -67,12 +69,19 @@ class UiWindowDialog(object) :
         self.pushButton_close.setGeometry(QtCore.QRect(1780, 980, 110, 35))
         font = QtGui.QFont()
         font.setFamily("Neue Haas Grotesk Text Pro")
-        font.setPointSize(11)
+        font.setPointSize(12)
         font.setBold(True)
         font.setWeight(50)
         self.pushButton_close.setFont(font)
         self.pushButton_close.setDefault(True)
         self.pushButton_close.setObjectName("pushButton_close")
+        self.pushButton_close.setStyleSheet("background: rgb(240, 167, 148);" 
+                                            "border-style: outset;"
+                                            "border-width: 2px;"
+                                            "border-radius: 5px;"
+                                            "border-color: grey;"
+                                            "padding: 2px;")
+                                            
         # button for loading OCT data - with customized font
         self.pushButton_loadOctData = QtWidgets.QPushButton(Dialog)
         self.pushButton_loadOctData.setGeometry(QtCore.QRect(1780, 860, 110, 110))
@@ -84,6 +93,12 @@ class UiWindowDialog(object) :
         self.pushButton_loadOctData.setFont(font)
         self.pushButton_loadOctData.setDefault(True)
         self.pushButton_loadOctData.setFlat(False)
+        self.pushButton_loadOctData.setStyleSheet("background: rgb(95, 180, 229);"
+                                                  "border-style: outset;"
+                                                  "border-width: 2px;"
+                                                  "border-radius: 5px;"
+                                                  "border-color: grey;"
+                                                  "padding: 2px;")
         self.pushButton_loadOctData.setObjectName("pushButton_loadOctData")
         # button to run the reconstruction (partially obsolete)
         self.pushButton_runReconstruction = QtWidgets.QPushButton(Dialog)
@@ -96,12 +111,18 @@ class UiWindowDialog(object) :
         self.pushButton_runReconstruction.setFont(font)
         self.pushButton_runReconstruction.setDefault(True)
         self.pushButton_runReconstruction.setFlat(False)
+        self.pushButton_runReconstruction.setStyleSheet("background: rgb(132, 201, 188);"
+                                                        "border-style: outset;"
+                                                        "border-width: 2px;"
+                                                        "border-radius: 5px;"
+                                                        "border-color: rgb(47, 142, 145);"
+                                                        "padding: 2px;")
         self.pushButton_runReconstruction.setObjectName("pushButton_runReconstruction")
 
         ## Push Buttons for Display Options
         # label for box with display options
         self._label_DisplayOptions = QtWidgets.QLabel(Dialog)
-        self._label_DisplayOptions.setGeometry(QtCore.QRect(1350, 680, 180, 30))
+        self._label_DisplayOptions.setGeometry(QtCore.QRect(1350, 690, 180, 30))
         font = QtGui.QFont()
         font.setFamily("Verdana Pro Semibold")
         font.setPointSize(8)
@@ -109,6 +130,13 @@ class UiWindowDialog(object) :
         font.setWeight(75)
         self._label_DisplayOptions.setFont(font)
         self._label_DisplayOptions.setAlignment(QtCore.Qt.AlignCenter)
+        self._label_DisplayOptions.setStyleSheet("color: rgb(17, 29, 78);"
+                                                 "background: rgb(181, 220, 241);"
+                                                 "border-style: outset;"
+                                                 "border-width: 2px;"
+                                                 "border-radius: 3px;"
+                                                 "border-color: grey;"
+                                                 "padding: 2px;")
         self._label_DisplayOptions.setObjectName("_label_DisplayOptions")
         # enface display push button
         font = QtGui.QFont()
@@ -116,23 +144,51 @@ class UiWindowDialog(object) :
         font.setBold(True)
         font.setWeight(75)
         self.pushButton_showEnFace = QtWidgets.QPushButton(Dialog)
-        self.pushButton_showEnFace.setGeometry(QtCore.QRect(1350, 710, 180, 40))
+        self.pushButton_showEnFace.setGeometry(QtCore.QRect(1350, 722, 180, 40))
         self.pushButton_showEnFace.setFont(font)
+        self.pushButton_showEnFace.setFlat(False)
+        self.pushButton_showEnFace.setStyleSheet("background : rgb(95, 180, 229);"
+                                                "border-style: outset;"
+                                                "border-width: 2px;"
+                                                "border-radius: 7px;"
+                                                "border-color: grey;"
+                                                "padding: 2px;")
         self.pushButton_showEnFace.setObjectName("pushButton_showEnFace")
         # A-scan display push button
         self.pushButton_displayAScanAtIntersection = QtWidgets.QPushButton(Dialog)
-        self.pushButton_displayAScanAtIntersection.setGeometry(QtCore.QRect(1350, 760, 180, 40))
+        self.pushButton_displayAScanAtIntersection.setGeometry(QtCore.QRect(1350, 772, 180, 40))
         self.pushButton_displayAScanAtIntersection.setFont(font)
+        self.pushButton_displayAScanAtIntersection.setFlat(False)
+        self.pushButton_displayAScanAtIntersection.setStyleSheet("background : rgb(151, 207, 236);"
+                                                                 "border-style: outset;"
+                                                                 "border-width: 2px;"
+                                                                 "border-radius: 7px;"
+                                                                 "border-color: grey;"
+                                                                 "padding: 2px;")
         self.pushButton_displayAScanAtIntersection.setObjectName("pushButton_displayAScanAtIntersection")
         # polynomial function for dispersion correction display  
         self.pushButton_displayDispersionCurves = QtWidgets.QPushButton(Dialog)
-        self.pushButton_displayDispersionCurves.setGeometry(QtCore.QRect(1350, 810, 180, 40))
+        self.pushButton_displayDispersionCurves.setGeometry(QtCore.QRect(1350, 822, 180, 40))
         self.pushButton_displayDispersionCurves.setFont(font)
+        self.pushButton_displayDispersionCurves.setFlat(False)
+        self.pushButton_displayDispersionCurves.setStyleSheet("background : rgb(181, 220, 241);"
+                                                                 "border-style: outset;"
+                                                                 "border-width: 2px;"
+                                                                 "border-radius: 7px;"
+                                                                 "border-color: grey;"
+                                                                 "padding: 2px;")
         self.pushButton_displayDispersionCurves.setObjectName("pushButton_displayDispersionCurves")
         # convolutional/windowing functions plot/display 
         self.pushButton_displayWindowingFunctions = QtWidgets.QPushButton(Dialog)
-        self.pushButton_displayWindowingFunctions.setGeometry(QtCore.QRect(1350, 860, 180, 40))
+        self.pushButton_displayWindowingFunctions.setGeometry(QtCore.QRect(1350, 872, 180, 40))
         self.pushButton_displayWindowingFunctions.setFont(font)
+        self.pushButton_displayWindowingFunctions.setFlat(False)
+        self.pushButton_displayWindowingFunctions.setStyleSheet("background : rgb(207, 232, 246);"
+                                                                 "border-style: outset;"
+                                                                 "border-width: 2px;"
+                                                                 "border-radius: 7px;"
+                                                                 "border-color: grey;"
+                                                                 "padding: 2px;")
         self.pushButton_displayWindowingFunctions.setObjectName("pushButton_displayWindowingFunctions")
         
         ######################################################################################
@@ -146,6 +202,7 @@ class UiWindowDialog(object) :
         self.Left_BScanWindow.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.Left_BScanWindow.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.Left_BScanWindow.setText("")
+        self.Left_BScanWindow.setStyleSheet("background: rgb(181, 220, 241)")
         self.Left_BScanWindow.setObjectName("Left_BScanWindow")
         # label left B-scan display canvas/widget
         font = QtGui.QFont()
@@ -157,10 +214,17 @@ class UiWindowDialog(object) :
         self._label_leftBscanDisplayCanvas.setGeometry(QtCore.QRect(10, 10, 920, 20))
         self._label_leftBscanDisplayCanvas.setAlignment(QtCore.Qt.AlignCenter)
         self._label_leftBscanDisplayCanvas.setFont(font)
+        self._label_leftBscanDisplayCanvas.setStyleSheet("color: rgb(231, 243, 251)")
         self._label_leftBscanDisplayCanvas.setObjectName("_label_leftBscanDisplayCanvas")
         # LEFT = VERTICAL B-scan selection spin box
         self.spinBox_leftBScanWindow = QtWidgets.QSpinBox(Dialog)
         self.spinBox_leftBScanWindow.setGeometry(QtCore.QRect(930, 960, 60, 30))
+        self.spinBox_leftBScanWindow.setStyleSheet("color: rgb(231, 243, 251);"
+                                                   "border-style: outset;"
+                                                   "border-width: 2px;"
+                                                    "border-radius: 3px;"
+                                                    "border-color: grey;"
+                                                    "padding: 2px;")
         self.spinBox_leftBScanWindow.setObjectName("spinBox_leftBScanWindow")
         # left-hand-side widget/vertical B-scan display button  
         self.slideBar_leftBScanWindow = QtWidgets.QSlider(Dialog)
@@ -175,6 +239,7 @@ class UiWindowDialog(object) :
         self.Right_BScanWindow.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.Right_BScanWindow.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.Right_BScanWindow.setText("")
+        self.Right_BScanWindow.setStyleSheet("background: rgb(181, 220, 241)")
         self.Right_BScanWindow.setObjectName("Right_BScanWindow")
         # label B-scan right display canvas/widget
         font = QtGui.QFont()
@@ -185,10 +250,17 @@ class UiWindowDialog(object) :
         self._label_rightBscanDisplayCanvas= QtWidgets.QLabel(Dialog)
         self._label_rightBscanDisplayCanvas.setGeometry(QtCore.QRect(1260, 10, 370, 20))
         self._label_rightBscanDisplayCanvas.setFont(font)
+        self._label_rightBscanDisplayCanvas.setStyleSheet("color: rgb(231, 243, 251)")
         self._label_rightBscanDisplayCanvas.setObjectName("_label_rightBscanDisplayCanvas")
         # RIGHT = HORIZONTAL B-scan selection spin box
         self.spinBox_rightBScanWindow = QtWidgets.QSpinBox(Dialog)
         self.spinBox_rightBScanWindow.setGeometry(QtCore.QRect(1000, 920, 60, 30))
+        self.spinBox_rightBScanWindow.setStyleSheet("color: rgb(231, 243, 251);"
+                                                    "border-style: outset;"
+                                                    "border-width: 2px;"
+                                                    "border-radius: 3px;"
+                                                    "border-color: grey;"
+                                                    "padding: 2px;")
         self.spinBox_rightBScanWindow.setObjectName("spinBox_rightBScanWindow")
         # right-hand-side side widget/horizontal B-scan display button
         self.slideBar_rightBScanWindow = QtWidgets.QSlider(Dialog)
@@ -196,11 +268,12 @@ class UiWindowDialog(object) :
         self.slideBar_rightBScanWindow.setOrientation(QtCore.Qt.Vertical)
         self.slideBar_rightBScanWindow.setObjectName("slideBar_rightBScanWindow")
         
-        # CLICK BUTTON OPTIONS display
+        # Widget for BUTTON OPTIONS display
         self.DisplayOptionsWindow = QtWidgets.QLabel(Dialog)
         self.DisplayOptionsWindow.setGeometry(QtCore.QRect(20, 600, 600, 400))
         self.DisplayOptionsWindow.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.DisplayOptionsWindow.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.DisplayOptionsWindow.setStyleSheet("background: rgb(181, 220, 241)")
         self.DisplayOptionsWindow.setText("")
         self.DisplayOptionsWindow.setObjectName("DisplayOptionsWindow")
         
@@ -210,6 +283,7 @@ class UiWindowDialog(object) :
         self.EnfaceDisplayWindow.setGeometry(QtCore.QRect(640, 600, 350, 350))
         self.EnfaceDisplayWindow.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.EnfaceDisplayWindow.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.EnfaceDisplayWindow.setStyleSheet("background: rgb(181, 220, 241);")
         self.EnfaceDisplayWindow.setText("")
         self.EnfaceDisplayWindow.setObjectName("EnfaceDisplayWindow")
         
@@ -220,6 +294,8 @@ class UiWindowDialog(object) :
         self.gridLayoutWidget_OctVolumeDims = QtWidgets.QWidget(Dialog)
         self.gridLayoutWidget_OctVolumeDims.setEnabled(True)
         self.gridLayoutWidget_OctVolumeDims.setGeometry(QtCore.QRect(1550, 690, 340, 60))
+        self.gridLayoutWidget_OctVolumeDims.setStyleSheet("background: rgb(207, 232, 246);"
+                                                          "color: rgb(17, 29, 78)")
         self.gridLayoutWidget_OctVolumeDims.setObjectName("gridLayoutWidget_OctVolumeDims")
         self.gridLayout_OctVolumeDims = QtWidgets.QGridLayout(self.gridLayoutWidget_OctVolumeDims)
         self.gridLayout_OctVolumeDims.setContentsMargins(0, 0, 0, 0)
@@ -231,29 +307,45 @@ class UiWindowDialog(object) :
         self.spinBox_aScanLength = QtWidgets.QSpinBox(self.gridLayoutWidget_OctVolumeDims)
         font = QtGui.QFont()
         font.setFamily("Verdana Pro Semibold")
-        font.setPointSize(6)
+        font.setPointSize(7)
         font.setBold(True)
         font.setWeight(75)
         self.spinBox_aScanLength.setEnabled(False)
+        self.spinBox_aScanLength.setRange(0, 4096)
         self.spinBox_aScanLength.setObjectName("_spinBox_aScanLength")
+        self.spinBox_aScanLength.setStyleSheet("color: rgb(17, 29, 78);"
+                                               "background: rgb(181, 220, 241 )")
         self.gridLayout_OctVolumeDims.addWidget(self.spinBox_aScanLength, 2, 1, 1, 1)
         # label A-scan length display
         self._label_aScanLength = QtWidgets.QLabel(self.gridLayoutWidget_OctVolumeDims)
-        self._label_aScanLength.setEnabled(True)
         self._label_aScanLength.setFont(font)
         self._label_aScanLength.setAlignment(QtCore.Qt.AlignCenter)
         self._label_aScanLength.setObjectName("_label_aScanLength")
+        self._label_aScanLength.setStyleSheet("color: rgb(17, 29, 78);"
+                                              "border-style: outset;"
+                                              "border-width: 2px;"
+                                              "border-radius: 3px;"
+                                              "border-color: grey;"
+                                              "padding: 2px;")
         self.gridLayout_OctVolumeDims.addWidget(self._label_aScanLength, 1, 1, 1, 1)
         
         # spinbox for b-scan length display
         self.spinBox_bScanLength = QtWidgets.QSpinBox(self.gridLayoutWidget_OctVolumeDims)
         self.spinBox_bScanLength.setEnabled(False)
+        self.spinBox_bScanLength.setRange(0, 4096)
         self.spinBox_bScanLength.setObjectName("_spinBox_bScanLength")
+        self.spinBox_bScanLength.setStyleSheet("color: rgb(17, 29, 78);"
+                                               "background: rgb(181, 220, 241 )")
         self.gridLayout_OctVolumeDims.addWidget(self.spinBox_bScanLength, 2, 2, 1, 1)
         # label B-scan length display
         self._label_bScanLength = QtWidgets.QLabel(self.gridLayoutWidget_OctVolumeDims)
-        self._label_bScanLength.setEnabled(True)
         self._label_bScanLength.setFont(font)
+        self._label_bScanLength.setStyleSheet("color: rgb(17, 29, 78);"
+                                              "border-style: outset;"
+                                              "border-width: 2px;"
+                                              "border-radius: 3px;"
+                                              "border-color: grey;"
+                                              "padding: 2px;")
         self._label_bScanLength.setAlignment(QtCore.Qt.AlignCenter)
         self._label_bScanLength.setObjectName("_label_bScanLength")
         self.gridLayout_OctVolumeDims.addWidget(self._label_bScanLength, 1, 2, 1, 1)
@@ -261,12 +353,20 @@ class UiWindowDialog(object) :
         # spinbox for c-scan length display
         self.spinBox_cScanLength = QtWidgets.QSpinBox(self.gridLayoutWidget_OctVolumeDims)
         self.spinBox_cScanLength.setEnabled(False)
+        self.spinBox_cScanLength.setRange(0, 4096)
         self.spinBox_bScanLength.setObjectName("_spinBox_cScanLength")
+        self.spinBox_cScanLength.setStyleSheet("color: rgb(17, 29, 78);"
+                                               "background: rgb(181, 220, 241);")
         self.gridLayout_OctVolumeDims.addWidget(self.spinBox_cScanLength, 2, 3, 1, 1)
         # label C-scan length display
         self._label_cScanLength = QtWidgets.QLabel(self.gridLayoutWidget_OctVolumeDims)
-        self._label_cScanLength.setEnabled(True)
         self._label_cScanLength.setFont(font)
+        self._label_cScanLength.setStyleSheet("color: rgb(17, 29, 78);"
+                                              "border-style: outset;"
+                                              "border-width: 2px;"
+                                              "border-radius: 3px;"
+                                              "border-color: grey;"
+                                              "padding: 2px;")
         self._label_cScanLength.setAlignment(QtCore.Qt.AlignCenter)
         self._label_cScanLength.setObjectName("_label_cScanLength")
         self.gridLayout_OctVolumeDims.addWidget(self._label_cScanLength, 1, 3, 1, 1) 
@@ -279,6 +379,8 @@ class UiWindowDialog(object) :
         self.gridLayoutWidget_dispCoeffs.setEnabled(True)
         self.gridLayoutWidget_dispCoeffs.setGeometry(QtCore.QRect(1550, 620, 340, 60))
         self.gridLayoutWidget_dispCoeffs.setObjectName("gridLayoutWidget_dispCoeffs")
+        self.gridLayoutWidget_dispCoeffs.setStyleSheet("background: rgb(207, 232, 246);"
+                                                       "color: rgb(17, 29, 78)")
         self.gridLayout = QtWidgets.QGridLayout(self.gridLayoutWidget_dispCoeffs)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setHorizontalSpacing(4)
@@ -294,24 +396,44 @@ class UiWindowDialog(object) :
         font.setBold(True)
         font.setWeight(75)
         self._label_DisperisonCoefficients.setFont(font)
+        self._label_DisperisonCoefficients.setStyleSheet("color: rgb(17, 29, 78);"
+                                                         "background: rgb(95, 180, 229);"
+                                                         "border-style: outset;"
+                                                         "border-width: 2px;"
+                                                         "border-radius: 3px;"
+                                                         "border-color: grey;"
+                                                         "padding: 2px;")
         self._label_DisperisonCoefficients.setObjectName("_label_DisperisonCoefficients")
         
         ## c_0
         # spinbox c0 coeff
         self.spinBox_DispCoeffC0 = QtWidgets.QSpinBox(self.gridLayoutWidget_dispCoeffs)
-        font = QtGui.QFont()
-        font.setFamily("Verdana Pro Semibold")
-        font.setPointSize(6)
-        font.setBold(True)
-        font.setWeight(75)
         self.spinBox_DispCoeffC0.setEnabled(True)
+        self.spinBox_DispCoeffC0.setRange(-150, 150)
         self.spinBox_DispCoeffC0.setObjectName("spinBox_DispCoeffC0")
+        self.spinBox_DispCoeffC0.setStyleSheet("background: rgb(231, 243, 251);"
+                                              "border-style: outset;"
+                                               "border-width: 2px;"
+                                               "border-radius: 3px;"
+                                               "border-color: grey;"
+                                               "padding: 2px;")
         self.gridLayout.addWidget(self.spinBox_DispCoeffC0, 2, 3, 1, 1)
         # label c0 coeff
         self._label_DispCoeffC0 = QtWidgets.QLabel(self.gridLayoutWidget_dispCoeffs)
         self._label_DispCoeffC0.setEnabled(True)
+        font = QtGui.QFont()
+        font.setFamily("Verdana Pro Semibold")
+        font.setPointSize(7)
+        font.setBold(True)
+        font.setWeight(75)
         self._label_DispCoeffC0.setFont(font)
         self._label_DispCoeffC0.setToolTipDuration(4)
+        self._label_DispCoeffC0.setStyleSheet("color: rgb(17, 29, 78);"
+                                              "border-style: outset;"
+                                              "border-width: 2px;"
+                                              "border-radius: 3px;"
+                                              "border-color: grey;"
+                                              "padding: 2px;")
         self._label_DispCoeffC0.setAutoFillBackground(False)
         self._label_DispCoeffC0.setObjectName("_label_DispCoeffC0")
         self.gridLayout.addWidget(self._label_DispCoeffC0, 1, 3, 1, 1, QtCore.Qt.AlignHCenter)
@@ -319,13 +441,26 @@ class UiWindowDialog(object) :
         ## c_1
         # spinbox c1 coeff
         self.spinBox_DispCoeffC1 = QtWidgets.QSpinBox(self.gridLayoutWidget_dispCoeffs)
+        self.spinBox_DispCoeffC1.setStyleSheet("color: rgb(231, 243, 251)")
         self.spinBox_DispCoeffC1.setEnabled(True)
+        self.spinBox_DispCoeffC1.setStyleSheet("background: rgb(231, 243, 251);"
+                                              "border-style: outset;"
+                                               "border-width: 2px;"
+                                               "border-radius: 3px;"
+                                               "border-color: grey;"
+                                               "padding: 2px;")
         self.spinBox_DispCoeffC1.setObjectName("spinBox_DispCoeffC1")
         self.gridLayout.addWidget(self.spinBox_DispCoeffC1, 2, 2, 1, 1)
         # label c1 coeff
         self._label_DispCoeffC1 = QtWidgets.QLabel(self.gridLayoutWidget_dispCoeffs)
         self._label_DispCoeffC1.setEnabled(True)
         self._label_DispCoeffC1.setFont(font)
+        self._label_DispCoeffC1.setStyleSheet("color: rgb(17, 29, 78);"
+                                              "border-style: outset;"
+                                              "border-width: 2px;"
+                                              "border-radius: 3px;"
+                                              "border-color: grey;"
+                                              "padding: 2px;")
         self._label_DispCoeffC1.setObjectName("_label_DispCoeffC1")
         self.gridLayout.addWidget(self._label_DispCoeffC1, 1, 2, 1, 1, QtCore.Qt.AlignHCenter)
         
@@ -333,22 +468,46 @@ class UiWindowDialog(object) :
         # spinbox c2 coeff
         self.spinBox_DispCoeffC2 = QtWidgets.QSpinBox(self.gridLayoutWidget_dispCoeffs)
         self.spinBox_DispCoeffC2.setObjectName("spinBox_DispCoeffC2")
+        self.spinBox_DispCoeffC2.setStyleSheet("background: rgb(231, 243, 251);"
+                                              "border-style: outset;"
+                                               "border-width: 2px;"
+                                               "border-radius: 3px;"
+                                               "border-color: grey;"
+                                               "padding: 2px;")
         self.gridLayout.addWidget(self.spinBox_DispCoeffC2, 2, 1, 1, 1)
         # label c2 coeff
         self._label_DispCoeffC2 = QtWidgets.QLabel(self.gridLayoutWidget_dispCoeffs)
         self._label_DispCoeffC2.setFont(font)
+        self._label_DispCoeffC2.setStyleSheet("color: rgb(17, 29, 78);"
+                                              "border-style: outset;"
+                                              "border-width: 2px;"
+                                              "border-radius: 3px;"
+                                              "border-color: grey;"
+                                              "padding: 2px;")
         self._label_DispCoeffC2.setObjectName("_label_DispCoeffC2")
         self.gridLayout.addWidget(self._label_DispCoeffC2, 1, 1, 1, 1, QtCore.Qt.AlignHCenter)
         
         ## c_3
         # spinbox c2 coeff
         self.spinBox_DispCoeffC3 = QtWidgets.QSpinBox(self.gridLayoutWidget_dispCoeffs)
+        self.spinBox_DispCoeffC3.setStyleSheet("background: rgb(231, 243, 251);"
+                                              "border-style: outset;"
+                                               "border-width: 2px;"
+                                               "border-radius: 3px;"
+                                               "border-color: grey;"
+                                               "padding: 2px;")
         self.spinBox_DispCoeffC3.setObjectName("spinBox_DispCoeffC3")
         self.gridLayout.addWidget(self.spinBox_DispCoeffC3, 2, 0, 1, 1)
         # label c3 coeff
         self._label_DispCoeffC3 = QtWidgets.QLabel(self.gridLayoutWidget_dispCoeffs)
         self._label_DispCoeffC3.setEnabled(True)
         self._label_DispCoeffC3.setFont(font)
+        self._label_DispCoeffC3.setStyleSheet("color: rgb(17, 29, 78);"
+                                              "border-style: outset;"
+                                            "border-width: 2px;"
+                                            "border-radius: 3px;"
+                                            "border-color: grey;"
+                                            "padding: 2px;")
         self._label_DispCoeffC3.setObjectName("_label_DispCoeffC3")
         self.gridLayout.addWidget(self._label_DispCoeffC3, 1, 0, 1, 1, QtCore.Qt.AlignHCenter)
         
@@ -358,12 +517,18 @@ class UiWindowDialog(object) :
         ## Scaling - intensity of reconstructed scans
         # spin box disp scale
         self.spinBox_DisplayScale = QtWidgets.QSpinBox(Dialog)
-        self.spinBox_DisplayScale.setGeometry(QtCore.QRect(1490, 920, 45, 25))
+        self.spinBox_DisplayScale.setGeometry(QtCore.QRect(1500, 925, 50, 30))
         self.value_scaled_display = 64
         self.spinBox_DisplayScale.setValue(self.value_scaled_display)  
+        self.spinBox_DisplayScale.setStyleSheet("color: rgb(231, 243, 251);"
+                                              "border-style: outset;"
+                                               "border-width: 2px;"
+                                               "border-radius: 3px;"
+                                               "border-color: grey;"
+                                               "padding: 2px;")
         # label of value for scaling reconstructed display level
         self._label_DisplayScale = QtWidgets.QLabel(Dialog)
-        self._label_DisplayScale.setGeometry(QtCore.QRect(1350, 920, 150, 25))
+        self._label_DisplayScale.setGeometry(QtCore.QRect(1350, 925, 148, 25))
         font = QtGui.QFont()
         font.setFamily("Verdana Pro Semibold")
         font.setPointSize(6)
@@ -371,53 +536,103 @@ class UiWindowDialog(object) :
         font.setWeight(75)
         self._label_DisplayScale.setFont(font)
         self._label_DisplayScale.setEnabled(True)
+        self._label_DisplayScale.setStyleSheet("color: rgb(17, 29, 78);"
+                                               "background: rgb(181, 220, 241);"
+                                               "border-style: outset;"
+                                               "border-width: 2px;"
+                                               "border-radius: 3px;"
+                                               "border-color: grey;"
+                                               "padding: 2px;")
         self._label_DisplayScale.setObjectName("_label_DisplayScale")
         
         ## Black Level Value
         # spinbox black level
         self.spinBox_BlackLevel = QtWidgets.QSpinBox(Dialog)
-        self.spinBox_BlackLevel.setGeometry(QtCore.QRect(1490, 960, 45, 25))
+        self.spinBox_BlackLevel.setGeometry(QtCore.QRect(1500, 965, 50, 30))
         self.value_black_level = 77
-        self.spinBox_BlackLevel.setValue(self.value_black_level)  
+        self.spinBox_BlackLevel.setValue(self.value_black_level) 
+        self.spinBox_BlackLevel.setStyleSheet("color: rgb(231, 243, 251);"
+                                              "border-style: outset;"
+                                               "border-width: 2px;"
+                                               "border-radius: 3px;"
+                                               "border-color: grey;"
+                                               "padding: 2px;") 
         # label of value for black level in reconstruction
         self._label_BlackLevel = QtWidgets.QLabel(Dialog)
-        self._label_BlackLevel.setGeometry(QtCore.QRect(1350, 960, 150, 25))
+        self._label_BlackLevel.setGeometry(QtCore.QRect(1350, 965, 148, 25))
         self._label_BlackLevel.setFont(font)
+        self._label_BlackLevel.setStyleSheet("color: rgb(17, 29, 78);"
+                                             "background: rgb(181, 220, 241);"
+                                             "border-style: outset;"
+                                             "border-width: 2px;"
+                                             "border-radius: 3px;"
+                                             "border-color: grey;"
+                                             "padding: 2px;")
         self._label_BlackLevel.setEnabled(True)
         self._label_BlackLevel.setObjectName("_label_BlackLevel")
         
         ## Crop DC Samples
         # spin box to set n-samples from zero-delay (DC-removal) for cropping of DC
         self.spinBox_CropDcSamples = QtWidgets.QSpinBox(Dialog)
-        self.spinBox_CropDcSamples.setGeometry(QtCore.QRect(1710, 920, 45, 25))
+        self.spinBox_CropDcSamples.setGeometry(QtCore.QRect(1710, 925, 50, 30))
+        self.spinBox_CropDcSamples.setStyleSheet("color: rgb(231, 243, 251);"
+                                              "border-style: outset;"
+                                               "border-width: 2px;"
+                                               "border-radius: 3px;"
+                                               "border-color: grey;"
+                                               "padding: 2px;")
         self.samples_crop_dc = 25 
         self.samples_crop_hf = 0
         self.spinBox_CropDcSamples.setValue(self.samples_crop_dc)   
         # label to crop n-samples from zero-delay (DC-removal)
         self._label_CropDcSamples = QtWidgets.QLabel(Dialog)
-        self._label_CropDcSamples.setGeometry(QtCore.QRect(1550, 920, 150, 25))
+        self._label_CropDcSamples.setGeometry(QtCore.QRect(1560, 925, 148, 25))
         self._label_CropDcSamples.setFont(font)
+        self._label_CropDcSamples.setStyleSheet("color: rgb(17, 29, 78);"
+                                                "background: rgb(181, 220, 241);"
+                                                "border-style: outset;"
+                                                "border-width: 2px;"
+                                                "border-radius: 3px;"
+                                                "border-color: grey;"
+                                                "padding: 2px;")
         self._label_CropDcSamples.setEnabled(True)
         self._label_CropDcSamples.setObjectName("label_CropDcSamples")
         
         ## Crop HF Samples
         # spin box to set n-samples from bottom of A-scan
         self.spinBox_CropHfSamples = QtWidgets.QSpinBox(Dialog)
-        self.spinBox_CropHfSamples.setGeometry(QtCore.QRect(1710, 960, 45, 25))
+        self.spinBox_CropHfSamples.setGeometry(QtCore.QRect(1710, 965, 50, 30))
+        self.spinBox_CropHfSamples.setStyleSheet("color: rgb(231, 243, 251);"
+                                              "border-style: outset;"
+                                               "border-width: 2px;"
+                                               "border-radius: 3px;"
+                                               "border-color: grey;"
+                                               "padding: 2px;") 
         self.samples_crop_hf = 20
-        self.spinBox_CropHfSamples.setValue(self.samples_crop_hf)  
+        self.spinBox_CropHfSamples.setValue(self.samples_crop_hf) 
         # label to set n-samples from bottom of A-scan
         self._label_CropHfSamples = QtWidgets.QLabel(Dialog)
-        self._label_CropHfSamples.setGeometry(QtCore.QRect(1550, 960, 150, 25))
+        self._label_CropHfSamples.setGeometry(QtCore.QRect(1560, 965, 148, 25))
         self._label_CropHfSamples.setFont(font)
+        self._label_CropHfSamples.setStyleSheet("color: rgb(17, 29, 78);"
+                                                "background: rgb(181, 220, 241);"
+                                                "border-style: outset;"
+                                                "border-width: 2px;"
+                                                "border-radius: 3px;"
+                                                "border-color: grey;"
+                                                "padding: 2px;")
         self._label_CropHfSamples.setEnabled(True)
         self._label_CropHfSamples.setObjectName("label_CropHfSamples")        
 
-        
+        #################################################################################
+        # Console prints #
+        ####################
         # display box for console print displays
         self.label_ConsoleLog = QtWidgets.QLabel(Dialog)
         self.label_ConsoleLog.setGeometry(QtCore.QRect(1070, 600, 260, 400))
         self.label_ConsoleLog.setFrameShape(QtWidgets.QFrame.Box)
+        self.label_ConsoleLog.setStyleSheet("background: rgb(231, 243, 251);"
+                                            "color: rgb(17, 29, 89)")
         self.label_ConsoleLog.setMidLineWidth(1)
         self.label_ConsoleLog.setObjectName("label_ConsoleLog")
         
@@ -433,12 +648,15 @@ class UiWindowDialog(object) :
         font.setBold(True)
         font.setWeight(75)
         self._label_WindowingFunction.setFont(font)
+        self._label_WindowingFunction.setStyleSheet("color: rgb(231, 243, 251)")
         self._label_WindowingFunction.setObjectName("_label_WindowingFunction")
-        self._label_WindowingFunction.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self._label_WindowingFunction.setLayoutDirection(QtCore.Qt.LeftToRight) 
         self._label_WindowingFunction.setAlignment(QtCore.Qt.AlignCenter)
         # Windowing options drop down menu
         self.comboBox_windowingOptions = QtWidgets.QComboBox(Dialog)
         self.comboBox_windowingOptions.setGeometry(QtCore.QRect(1550, 800, 220, 30))
+        self.comboBox_windowingOptions.setStyleSheet("color: rgb(17, 29, 78);"
+                                                     "background: rgb(181, 220, 241)")
         self.comboBox_windowingOptions.setObjectName("comboBox_windowingOptions")
         # NOTE: all box items contain data in form a list of a string (wind-key) and a int (value filter-sigma)
         self.comboBox_windowingOptions.addItem("Von-Hann window (default)", ["Hann", 1])
@@ -536,9 +754,9 @@ class UiWindowDialog(object) :
         self.label_ConsoleLog.setText(_translate("Dialog", "Console prints"))
         self._label_BlackLevel.setText(_translate("Dialog", "Black Level Value"))
         self._label_DisplayOptions.setText(_translate("Dialog", "Display Options"))
-        self._label_CropHfSamples.setText(_translate("Dialog", "Crop HF [samples]"))
+        self._label_CropHfSamples.setText(_translate("Dialog", "Crop HF [smpls]"))
         self._label_DisplayScale.setText(_translate("Dialog", "Display Scale Factor"))
-        self._label_CropDcSamples.setText(_translate("Dialog", "Crop LF/DC [samples]"))
+        self._label_CropDcSamples.setText(_translate("Dialog", "Crop LF/DC [smpls]"))
         self._label_WindowingFunction.setText(_translate("Dialog", "Windowing Function"))
         self._label_DisperisonCoefficients.setText(_translate("Dialog", "Dispersion Coefficients"))
         self._label_leftBscanDisplayCanvas.setText(_translate("Dialog", "Vertical B-scan Display Canvas (red)"))
@@ -561,9 +779,6 @@ class UiWindowDialog(object) :
         self.set_spinbox_max_values(self.dims_buffer_oct_raw_data[1], self.dims_buffer_oct_raw_data[2]) 
         self.set_bScan_slider_max_values(self.dims_buffer_oct_raw_data[1], self.dims_buffer_oct_raw_data[2]) 
         
-    def _update_oct_volume_dimension_display(self) -> None :
-        """ updates the displayed tuple containing the volume dimensions in < OctVolumeDimensionWindow > """
-        self.OctVolumeDimensionWindow.setText( str(self.dims_buffer_oct_raw_data) )
         
     def create_enface_display_widget(self) -> None :
         """ creates an enface image with overlayed lines indicating the current B-scans and/or updates the display """
@@ -731,6 +946,15 @@ class UiWindowDialog(object) :
         x = msg_box.exec_()
         self.DEC = OctReconstructionManager() # create new instance of Backend / Reconstruction Class
      
+    ###############################################################################################
+    # Update Functions for GUI elements #
+    #####################################  
+    def _update_oct_volume_dimension_display(self) -> None :
+        """ updates the displayed tuple containing the volume dimensions in < OctVolumeDimensionWindow > """
+        self.spinBox_aScanLength.setValue( self.dims_buffer_oct_raw_data[0] )
+        self.spinBox_bScanLength.setValue( self.dims_buffer_oct_raw_data[1] )
+        self.spinBox_cScanLength.setValue( self.dims_buffer_oct_raw_data[2] )
+        
     def update_pos_Bscan_indicating_lines(self, curr_left_idx: int, curr_right_idx: int, 
                                           line_width: int=1) -> None :
         """ draws/updates the lines, via getting spinbox/slider values """
@@ -831,7 +1055,8 @@ def run() :
     Dialog = QtWidgets.QDialog()
     ui = UiWindowDialog()
     ui.setupUi(Dialog)
-    Dialog.showMaximized() # comment in if screen resolution >= Full HD
+    Dialog.setWindowIcon( QtGui.QIcon(os.path.join(os.path.dirname( __file__ ), 'ZeissLabLogo.jpg')) )
+    # Dialog.showMaximized() # comment in if screen resolution == Full HD
     Dialog.show()
     sys.exit(app.exec_())
         
