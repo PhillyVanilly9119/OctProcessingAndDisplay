@@ -144,6 +144,6 @@ class OctDataFileManager() :
                     
 # for testing and debugging purposes
 if __name__ == '__main__' :
-    print("[INFO:] Running from data_io...")
+    print("[INFO:] Running from < data_io.py > ...")
     IO = OctDataFileManager()
     IO._display_meta_data()    
