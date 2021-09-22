@@ -24,9 +24,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'Config')))
 
 # import backend module(s)
-from recon_funcs import OctReconstructionManager
-from gui_config_parsing import GuiConfigDataManager as GCONF
-from set_design_of_gui_elements import RgbColorCodeManager as RGB # TODO: adjust to correct class after implemention os done
+from octreconstructionmanager import OctReconstructionManager
+# from guidesignparamatermanager import GuiConfigDataManager
 
 
 class UiWindowDialog(object) :
@@ -34,7 +33,7 @@ class UiWindowDialog(object) :
         super().__init__()
         self.data_endianness = data_endianness
         # WORKS! TODO: rethink the place where the config parameters are supposed to be parsed
-        self.gui_layout_config = GCONF('config_gui_layout').load_json_file() # create a new config file
+        # self.gui_layout_config = GuiConfigDataManager('config_gui_layout').load_json_file() # create a new config file
          
     def setupUi(self, Dialog):
         
@@ -521,7 +520,7 @@ class UiWindowDialog(object) :
         ## Scaling - intensity of reconstructed scans
         # spin box disp scale
         self.spinBox_DisplayScale = QtWidgets.QSpinBox(Dialog)
-        self.spinBox_DisplayScale.setGeometry(QtCore.QRect(1500, 925, 50, 30))
+        self.spinBox_DisplayScale.setGeometry(QtCore.QRect(1500, 935, 50, 30))
         self.value_scaled_display = 64
         self.spinBox_DisplayScale.setValue(self.value_scaled_display)  
         self.spinBox_DisplayScale.setStyleSheet("color: rgb(231, 243, 251);"
@@ -532,7 +531,7 @@ class UiWindowDialog(object) :
                                                "padding: 2px;")
         # label of value for scaling reconstructed display level
         self._label_DisplayScale = QtWidgets.QLabel(Dialog)
-        self._label_DisplayScale.setGeometry(QtCore.QRect(1350, 925, 148, 25))
+        self._label_DisplayScale.setGeometry(QtCore.QRect(1350, 935, 148, 25))
         font = QtGui.QFont()
         font.setFamily("Verdana Pro Semibold")
         font.setPointSize(6)
@@ -552,7 +551,7 @@ class UiWindowDialog(object) :
         ## Black Level Value
         # spinbox black level
         self.spinBox_BlackLevel = QtWidgets.QSpinBox(Dialog)
-        self.spinBox_BlackLevel.setGeometry(QtCore.QRect(1500, 965, 50, 30))
+        self.spinBox_BlackLevel.setGeometry(QtCore.QRect(1500, 975, 50, 30))
         self.value_black_level = 77
         self.spinBox_BlackLevel.setValue(self.value_black_level) 
         self.spinBox_BlackLevel.setStyleSheet("color: rgb(231, 243, 251);"
@@ -563,7 +562,7 @@ class UiWindowDialog(object) :
                                                "padding: 2px;") 
         # label of value for black level in reconstruction
         self._label_BlackLevel = QtWidgets.QLabel(Dialog)
-        self._label_BlackLevel.setGeometry(QtCore.QRect(1350, 965, 148, 25))
+        self._label_BlackLevel.setGeometry(QtCore.QRect(1350, 975, 148, 25))
         self._label_BlackLevel.setFont(font)
         self._label_BlackLevel.setStyleSheet("color: rgb(17, 29, 78);"
                                              "background: rgb(181, 220, 241);"
@@ -578,7 +577,7 @@ class UiWindowDialog(object) :
         ## Crop DC Samples
         # spin box to set n-samples from zero-delay (DC-removal) for cropping of DC
         self.spinBox_CropDcSamples = QtWidgets.QSpinBox(Dialog)
-        self.spinBox_CropDcSamples.setGeometry(QtCore.QRect(1710, 925, 50, 30))
+        self.spinBox_CropDcSamples.setGeometry(QtCore.QRect(1710, 935, 50, 30))
         self.spinBox_CropDcSamples.setStyleSheet("color: rgb(231, 243, 251);"
                                               "border-style: outset;"
                                                "border-width: 2px;"
@@ -590,7 +589,7 @@ class UiWindowDialog(object) :
         self.spinBox_CropDcSamples.setValue(self.samples_crop_dc)   
         # label to crop n-samples from zero-delay (DC-removal)
         self._label_CropDcSamples = QtWidgets.QLabel(Dialog)
-        self._label_CropDcSamples.setGeometry(QtCore.QRect(1560, 925, 148, 25))
+        self._label_CropDcSamples.setGeometry(QtCore.QRect(1560, 935, 148, 25))
         self._label_CropDcSamples.setFont(font)
         self._label_CropDcSamples.setStyleSheet("color: rgb(17, 29, 78);"
                                                 "background: rgb(181, 220, 241);"
@@ -605,7 +604,7 @@ class UiWindowDialog(object) :
         ## Crop HF Samples
         # spin box to set n-samples from bottom of A-scan
         self.spinBox_CropHfSamples = QtWidgets.QSpinBox(Dialog)
-        self.spinBox_CropHfSamples.setGeometry(QtCore.QRect(1710, 965, 50, 30))
+        self.spinBox_CropHfSamples.setGeometry(QtCore.QRect(1710, 975, 50, 30))
         self.spinBox_CropHfSamples.setStyleSheet("color: rgb(231, 243, 251);"
                                               "border-style: outset;"
                                                "border-width: 2px;"
@@ -616,7 +615,7 @@ class UiWindowDialog(object) :
         self.spinBox_CropHfSamples.setValue(self.samples_crop_hf) 
         # label to set n-samples from bottom of A-scan
         self._label_CropHfSamples = QtWidgets.QLabel(Dialog)
-        self._label_CropHfSamples.setGeometry(QtCore.QRect(1560, 965, 148, 25))
+        self._label_CropHfSamples.setGeometry(QtCore.QRect(1560, 975, 148, 25))
         self._label_CropHfSamples.setFont(font)
         self._label_CropHfSamples.setStyleSheet("color: rgb(17, 29, 78);"
                                                 "background: rgb(181, 220, 241);"

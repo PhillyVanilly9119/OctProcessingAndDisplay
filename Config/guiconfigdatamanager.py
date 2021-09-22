@@ -2,7 +2,7 @@
                                         ******
         Author: @Philipp Matten - philipp.matten@meduniwien.ac.at / philipp.matten@gmx.de
                 
-                        Copyright 2021 Medical University of Vienna 
+                                    Copyright 2021 
                                         ******
                                          
     >>> file with a class and its methods for handling *.JSON file parsing-parameters for GUI     
@@ -13,15 +13,16 @@
 import os
 import json
 
-# custom imports
-from color_code_manager import *
+# custom imports 
+from rgbcolorcodemanager import RgbColorCodeManager
 
-class GuiConfigDataManager() :
+
+class GuiConfigDataManager(RgbColorCodeManager) :
     """ 
-    simple class that loads and returns a dictionary containing 
-    the config-file with the GUI parsing parameters 
+    simple class that creates a dictionary containing the content of a config-file 
+    with the GUI parsing parameters and returns them as parseable parameters
     """
-    def __init__(self, filename) -> None :
+    def __init__(self, filename: str='config_gui_layout') -> None :
         self.full_file_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'Config', filename + '.json')) 
 
     def load_json_file(self) -> dict :

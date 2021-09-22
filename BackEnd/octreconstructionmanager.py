@@ -18,7 +18,7 @@ from scipy import signal
 import matplotlib.pyplot as plt
 
 # custom imports
-import data_io as IO
+import octdatafilemanager as IO
 
 
 class OctReconstructionManager(IO.OctDataFileManager) :

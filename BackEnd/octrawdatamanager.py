@@ -18,7 +18,7 @@ import numpy as np
 # import matplotlib.pyplot as plt #debug
 
 # custom imports
-import data_io as IO
+import octdatafilemanager as IO
 # from recon_funcs import OctReconstructionManager as REC
 
 

@@ -10,16 +10,22 @@
 """
 
 # global imports
+import os
+import sys
 from typing import List
 
 # custom imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'Config')))
+from rgbcolorcodemanager import RgbColorCodeManager
+from guiconfigdatamanager import GuiConfigDataManager
+
 
 test_data = ["color: rgb(17, 29, 78)",
              "border-style: outset",
              "border-width: 2px"]
 
 
-class GuiDesignParamaterManager():
+class GuiDesignParamaterManager(GuiConfigDataManager):
     def __init__(self) -> None:
         pass
 
