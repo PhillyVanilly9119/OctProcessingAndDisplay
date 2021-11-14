@@ -72,12 +72,12 @@ def reconstruct_and_write_cropped_vol_2disk(samples_dc_crop=100, samples_hf_crop
     np.asarray(out_scan)
     out_scan = np.roll(np.asarray(out_scan), roll_offset, axis=-1)
     save_file_name = f"ReconVol_{index}_{out_scan.shape[0]}x{out_scan.shape[1]}x{out_scan.shape[2]}_.bin"
+    print(f"Took {round((time.time()-t1)/60)} mins to process entire volume")
     out_scan.astype('uint8').tofile( os.path.join(ORM._tk_file_selection(), save_file_name) )
-    print(f"Took {round((time.time()-t1)/60)} mins to process and save entire volume")
 
 def load_reconstructed_oct_volume(data_shape=(5312, 512, 512)) -> np.array :
     ORM = OctReconstructionManager(dtype_loading='<u1')
-    data = np.asarray(np.fromfile(ORM._tk_file_selection(), dtype='>u1'))
+    data = np.asarray(np.fromfile(ORM._tk_folder_selection(), dtype='>u1'))
     data = data.reshape(data_shape)
     plt.imshow( data[:,:,256] )
     plt.show()
@@ -90,7 +90,7 @@ def run() :
     # check_display_size_and_bScan_offset()
     
     samples_dc_crop=100
-    samples_hf_crop= 13313-samples_dc_crop-5700
+    samples_hf_crop= 13313-samples_dc_crop-5699
     print(samples_hf_crop)
 
     reconstruct_and_write_cropped_vol_2disk(samples_dc_crop=samples_dc_crop, 
