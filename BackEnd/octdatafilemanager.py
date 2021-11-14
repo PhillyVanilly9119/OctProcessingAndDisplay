@@ -57,7 +57,7 @@ class OctDataFileManager() :
         """ returns path to main folder of what the user selects via a GUI/prompt """
         root = Tk()
         root.withdraw()
-        path = askdirectory(title='Please select a file')
+        path = askdirectory(title='Please select a folder')
         root.destroy()
         return path
     
