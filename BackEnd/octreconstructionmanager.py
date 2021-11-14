@@ -223,7 +223,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
 
 # for testing and debugging purposes
 if __name__ == '__main__' :
-    print("[INFO:] Running from < recon_funcs.py > ...")
+    print("[INFO:] Running from < octreconstructionmanager.py > ...")
     REC = OctReconstructionManager(dtype_loading='>u2')
     data = REC.load_oct_data()
     plt.imshow(np.mean(data))
