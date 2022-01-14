@@ -12,6 +12,7 @@
 # global imports
 import os
 import sys
+import cv2
 import time
 from numpy.core.fromnumeric import shape
 from numpy.core.numeric import roll
@@ -28,7 +29,7 @@ from octreconstructionmanager import OctReconstructionManager
 # from guiconfigdatamanager import GuiConfigDataManager
 
 def run_recon_on_raster_scan(d_coeffs, black_level, display_scale, wind_key, 
-                             samples_dc_crop, samples_hf_cro) :
+                             samples_dc_crop, samples_hf_crop) :
     """ Reconstructs an entire volume buffer from single *.BIN-file """    
     ORM = OctReconstructionManager( dtype_loading='<u2' )
     data = ORM.load_oct_data()
@@ -42,6 +43,8 @@ def run_recon_on_raster_scan(d_coeffs, black_level, display_scale, wind_key,
                                         disp_coeffs=d_coeffs, blck_lvl=black_level, scale_fac=display_scale,
                                         samples_dc_crop=samples_dc_crop, samples_hf_crop=samples_hf_crop)
         out_scan[:,:,scan] = bScan
+    plt.imshow(cv2.resize(out_scan[:,:,256], (400, 330)), cmap='gray')
+    plt.show()
     print(f" Took {round((time.perf_counter()-t1) / 60)} mins to reconstruct volume")
     return np.asarray( out_scan ), np.asarray( buffer )
 
@@ -67,7 +70,7 @@ def reconstruct_and_write_cropped_vol_2disk(path, d_coeffs=(8,-121,0,0), b_lvl=8
                                             index = 0, display_scale=63.75, roll_offset=35) -> None :
     cropped_aScans = 13312 - samples_dc_crop - samples_hf_crop
     print(f"")
-    out_scan, _ = run_recon_on_raster_scan(d_coeffs=d_coeffs, b_lvl=b_lvl, scale=display_scale,
+    out_scan, _ = run_recon_on_raster_scan(d_coeffs=d_coeffs, black_level=b_lvl, wind_key='hann', display_scale=display_scale,
                                            samples_dc_crop=samples_dc_crop, samples_hf_crop=samples_hf_crop)
     out_scan = np.roll( np.asarray(out_scan), roll_offset, axis=-1 )
     save_file_name = f"ReconVol_{index}_{out_scan.shape[0]}x{out_scan.shape[1]}x{out_scan.shape[2]}_.bin"
@@ -85,27 +88,25 @@ def load_reconstructed_oct_volume( data_shape=(5312, 512, 512) ) -> np.array :
     plt.show()
     return data
 
+def resample_reconstruced_volume( in_shape, is_flip_aScnas=True ) -> np.array :
+    ORM = OctReconstructionManager( dtype_loading='<u1' )
+    in_data = np.asarray( np.fromfile(ORM._tk_file_selection(), dtype='>u1') )
+    in_data = in_data.reshape( in_shape )
+    # print(in_data.shape)
+    plt.imshow( in_data[:, :, in_data.shape[-1]//2] )
+    plt.show()
+    re_dims = (in_data.shape[0]//4, in_data.shape[1], in_data.shape[-1])
+    # print(re_dims)
+    out_data = np.zeros( (re_dims), dtype='uint8' )
+    for bScan in tqdm(range(in_data.shape[-1])) :
+        out_data[:,:,bScan] = cv2.resize( in_data[:,:,bScan], (re_dims[1], re_dims[0]), cv2.INTER_CUBIC )
+    if is_flip_aScnas :
+        return np.asarray( out_data[::-1,:,:] )
+    return np.asarray( out_data )    
 
-def run() :
+def run() : 
     print("[INFO:] Running from processrastercapturescan.py")
 
-    check_display_size_and_bScan_offset()
-    
-    # Eye 4 40uL 01
-    
-    samples_dc_crop = 800
-    crop_val = 4096
-    samples_hf_crop = 13312 - samples_dc_crop - crop_val
-    roll_offset = 512-5
-    d_coeffs = (8, -121, 0, 0)
-    b_lvl = 100
-    scale = 70
-    path = r'/home/zeiss/RasterVolumes'
-     
-    reconstruct_and_write_cropped_vol_2disk(path=path, b_lvl=b_lvl, d_coeffs=d_coeffs, samples_dc_crop=samples_dc_crop, samples_hf_crop=samples_hf_crop, 
-                                        index=1, display_scale=scale, roll_offset=roll_offset)
-
-    load_reconstructed_oct_volume( data_shape=(crop_val, 512, 512) )    
-
+       
 if __name__ == '__main__':
     run()
