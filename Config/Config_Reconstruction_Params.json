@@ -1,0 +1,13 @@
+{
+    "dispersion_coefficients": [
+        0,
+        0,
+        0,
+        0
+    ],
+    "disp_scale_range": 63.75,
+    "black_lvl_for_dis": 74,
+    "windowing_key": "Hanning",
+    "dc_crop_samples": 100,
+    "hf_crop_samples": 0   
+}
