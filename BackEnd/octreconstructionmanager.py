@@ -98,7 +98,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         elif buffer.ndim == 3 :
             return np.asarray( buffer ), np.asarray( vector[:, np.newaxis, np.newaxis] )
         else : 
-            print("[DIMENSIONALITY WARNING:] returning empty array (dimensionality neither 1,2 or 3)")
+            print("[DIMENSIONALITY WARNING:] returning empty array (dimensionality neither 1,2 nor 3)")
             return []
     
     # subtract noise floor from scan -> TODO: Review - produces negative values...
