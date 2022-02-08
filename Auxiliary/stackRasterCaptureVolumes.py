@@ -1,16 +1,16 @@
 """
-
-@author:    Philipp
-            philipp.matten@meduniwien.ac.at
-
-@copyright: Medical University of Vienna,
-            Center for Medical Physics and Biomedical Engineering
-
+                                        ******
+        Author: @Philipp Matten - philipp.matten@meduniwien.ac.at / philipp.matten@gmx.de
+                
+                                    Copyright 2021 
+                                        ******
+                                         
+    >>> Contains methods to stack and save B-scans from raster capture scan  to a C-scan      
+                                
 """
 
 import os
 import numpy as np
-#import matplotlib.pyplot as plt
 from tkinter.filedialog import Tk, askdirectory
 
 
@@ -20,19 +20,7 @@ def clean_path_selection(text: str) :
     path = askdirectory(title=text, mustexist=True)
     root.destroy()
     return path
-
-
-def find_indices_in_file_names(path: str=None):
-    # Add logic to find max index for vols and B-scan/vol
-    if path is None:
-        path = clean_path_selection("")
-    main_file_list = os.listdir(path)
-    split_list = [file.split('.bin')[0] for file in main_file_list]
-    split_list = [[file.split('_')[0].split('rasterVol')[1], 
-                   file.split('_')[1].split('bufferNo.')[1]] for file in split_list]
-    return dict(zip( main_file_list, split_list )), split_list
-   
-    
+  
 def load_raw_bScan(path: str, dims: tuple, is_dims_in_file_name: bool=False, dtype='uint16'):
     #TODO: Flag has to be implemented
     if is_dims_in_file_name:
@@ -41,10 +29,9 @@ def load_raw_bScan(path: str, dims: tuple, is_dims_in_file_name: bool=False, dty
     buffer = np.fromfile(path, dtype=dtype)
     return np.reshape(buffer, dims)
 
-
-def stack_bScans(path: str):
+def stack_bScans(path: str) -> np.ndarray :
     stack = []
-    print("[INFO:] Loading and stacking B-scans tzo C-scan...")
+    print("[INFO:] Loading and stacking B-scans to C-scan...")
     for root, _, files in os.walk(os.path.abspath(path)):
         for file in files:
             c_file_path = os.path.join(root, file)
@@ -59,7 +46,6 @@ def stack_bScans(path: str):
     print("[INFO:] Done!")
     return stack
 
-
 def save_stacked_vol(stack: np.ndarray, path_saving: str, file_name: str="StackedOctVolume") -> None :
     if not os.path.isdir(path_saving):
         os.mkdir(path_saving)
@@ -67,10 +53,9 @@ def save_stacked_vol(stack: np.ndarray, path_saving: str, file_name: str="Stacke
     stack.astype(np.uint16).tofile(os.path.join(path_saving, f"{file_name}_{stack.shape[0]}x{stack.shape[1]}x{stack.shape[2]}_.bin"))
     print(f"[INFO:] Done saving OCT volume data to {os.path.join(path_saving, file_name)} !")
     
-    
 def main(): 
-    save_stacked_vol(stack_bScans(clean_path_selection("Please select folder with all B-scans in it:")), 
-                     r"C:\Users\phili\Desktop" , "testVol.bin")
+    _path = clean_path_selection("Please select folder with all B-scans in it:")
+    save_stacked_vol(stack_bScans(_path), _path, "testVol.bin")
     
 
 if __name__ == '__main__':

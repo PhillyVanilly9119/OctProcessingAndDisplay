@@ -98,7 +98,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         elif buffer.ndim == 3 :
             return np.asarray( buffer ), np.asarray( vector[:, np.newaxis, np.newaxis] )
         else : 
-            print("[DIMENSIONALITY WARNING:] returning empty array (dimensionality neither 1,2 or 3)")
+            print("[DIMENSIONALITY WARNING:] returning empty array (dimensionality neither 1,2 nor 3)")
             return []
     
     # subtract noise floor from scan -> TODO: Review - produces negative values...
@@ -223,9 +223,10 @@ class OctReconstructionManager(IO.OctDataFileManager) :
 
 # for testing and debugging purposes
 if __name__ == '__main__' :
-    print("[INFO:] Running from < recon_funcs.py > ...")
+    print("[INFO:] Running from < octreconstructionmanager.py > ...")
     REC = OctReconstructionManager(dtype_loading='>u2')
     data = REC.load_oct_data()
-    rec = REC.calculate_enface_for_display(data)
-    # plt.imshow(rec)
-    # plt.show()
+    plt.imshow(np.mean(data))
+    # rec = REC.calculate_enface_for_display(data)
+    # # plt.imshow(rec)
+    plt.show()

@@ -10,14 +10,15 @@
 """
 
 # global imports
+import os
 import sys
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 # custom imports
 #TODO: change to relative path import
-sys.path.append("D:\PhilippDataAndFiles\Programming\Repositories\OctProcessingAndDisplay\Backend")
-from recon_funcs import OctReconstructionManager as REC
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'BackEnd')))
+from octreconstructionmanager import OctReconstructionManager as REC
 
 #!/usr/bin/python3
 # Threading example with QThread and moveToThread (PyQt5)

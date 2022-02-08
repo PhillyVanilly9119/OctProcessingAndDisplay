@@ -11,6 +11,7 @@
 
 # global imports
 import os
+import re
 import cv2
 import numpy as np
 
@@ -57,30 +58,36 @@ class OctDataFileManager() :
         """ returns path to main folder of what the user selects via a GUI/prompt """
         root = Tk()
         root.withdraw()
-        path = askdirectory(title='Please select a file')
+        path = askdirectory(title='Please select a folder')
         root.destroy()
         return path
     
     def get_oct_volume_dims(self, file_path: str) -> tuple :
         """ reads out and returns the dimensions of an OCT volume from the bin-files' name 
-        the dimensions block has to be of form '..._{aLen}x{bLen}x({cLen})_...' """
-        file_name = os.path.split(file_path)[-1]
+        the dimensions block has to be of form '..._{aLen}x{bLen}x({cLen})...' """
+        file_name = os.path.split(file_path)[-1] # get filename only
         dims_list = [s for s in file_name.split('_') if s.find('x') != -1]
         dims_block = ''.join(dims_list)
-        dims = tuple(int(i) for i in dims_block.split('x'))
+        dims_block = dims_block.split('x')
+        numbers = re.compile(r'\d+(?:\.\d+)?')
+        dims = []
+        for dim in dims_block: # rewrite list comprehensions
+            dims.append(numbers.findall(dim))
+        dims = [item for sublist in dims for item in sublist]
+        dims = tuple(int(i) for i in dims)
         return dims, len(dims)
     
     def load_oct_data(self, dtype=np.uint16) -> np.ndarray :
         """ returns properly reshaped OCT data (cube) """
         self._get_oct_meta_data() # creates <self.file_path_main>, which is needed in < self.load_selected_bin_file() >
-        return np.asarray( self.reshape_oct_volume(self.load_selected_bin_file()), dtype=dtype )
+        return np.asarray( self._reshape_oct_volume(self.load_selected_bin_file()), dtype=dtype )
             
     def load_selected_bin_file(self) :
         """ loads and returns bin file that was selected when class instance was created 
         NOTE: always loads data as uint"""
         return self.load_bin_file( self.file_path_main )
     
-    def reshape_oct_volume(self, buffer: np.array) -> np.array :
+    def _reshape_oct_volume(self, buffer: np.array) -> np.array :
         """ Returns reshaped volume buffer/np-array acc. to self.dims-shape """
         if len(self.oct_dims) == 1 :
             dims = self.oct_dims
@@ -141,9 +148,20 @@ class OctDataFileManager() :
                     img_buffer.append(c_img)
         return np.asarray(img_buffer, dtype=dtype_loading) 
                     
+    @staticmethod
+    def reshape_oct_volume(buffer: np.array, dims: tuple) -> np.array :
+        """ Returns reshaped volume buffer/np-array acc. to self.dims-shape """
+        if len(dims) == 1 :
+            dims = dims[0]
+        elif len(dims) == 2 :
+            dims = (dims[1], dims[0])
+        elif len(dims) == 3 :
+            dims = (dims[2], dims[1], dims[0])
+        return np.asarray( np.swapaxes(np.reshape(buffer, dims), 0, -1) )
+              
                     
 # for testing and debugging purposes
 if __name__ == '__main__' :
     print("[INFO:] Running from < data_io.py > ...")
     IO = OctDataFileManager()
-    IO._display_meta_data()    
+    IO.get_oct_volume_dims(r"C:\Users\Philipp\Desktop\TestVolumeStiching\rasterVol01_bufferNo.000_6656x500.bin")    
