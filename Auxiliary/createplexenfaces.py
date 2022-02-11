@@ -8,9 +8,10 @@
 import os
 import glob
 import json 
-from tqdm import tqdm
 import matplotlib
 import numpy as np
+from numba import njit
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 #----------------------------------------------------------------------
@@ -24,7 +25,8 @@ def load_binary(file_path: str, a: int, b: int, c: int) -> np.array:
     return data
 
 # abstacter method to generate en face maps 
-def calculte_enface(data: np.array, key: str="argmax") -> None:
+@njit # check how to use numba for this script
+def calculte_enface(data: np.array, key: str="mean") -> None:
     """ @param: np-array containing OCT volume
         @param: key to determine in which way the en face is calculated """
     # calculate en face on the basis of the argmax of every A-scan
