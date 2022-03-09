@@ -163,5 +163,4 @@ class OctDataFileManager() :
 # for testing and debugging purposes
 if __name__ == '__main__' :
     print("[INFO:] Running from < data_io.py > ...")
-    IO = OctDataFileManager()
-    IO.get_oct_volume_dims(r"C:\Users\Philipp\Desktop\TestVolumeStiching\rasterVol01_bufferNo.000_6656x500.bin")    
+    IO = OctDataFileManager()  

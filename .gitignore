@@ -36,6 +36,9 @@
 *.app
 *.bat
 
+# Paths
+**/Scripts/
+
 # Path with executables python files
 !__pychache__.
 **/Backend/__Pycache__/

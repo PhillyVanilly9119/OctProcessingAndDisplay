@@ -17,7 +17,7 @@ import json
 from rgbcolorcodemanager import RgbColorCodeManager
 
 
-class GuiConfigDataManager(RgbColorCodeManager) :
+class ConfigDataManager(RgbColorCodeManager) :
     """ 
     simple class that creates a dictionary containing the content of a config-file 
     with the GUI parsing parameters and returns them as parseable parameters
