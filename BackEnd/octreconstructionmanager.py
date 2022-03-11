@@ -10,14 +10,16 @@
 """
 
 # global imports
+import os
+import sys
 import numpy as np
-from numpy.core.fromnumeric import shape
-from numpy.lib.function_base import _calculate_shapes
-from numpy.lib.type_check import imag
 from scipy import signal
 import matplotlib.pyplot as plt
 
 # custom imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'Config')))
+from configdatamanager import ConfigDataManager
+
 import octdatafilemanager as IO
 
 
@@ -68,12 +70,13 @@ class OctReconstructionManager(IO.OctDataFileManager) :
             return self.return_scaled( data, black_lvl=black_lvl, disp_scale=fac_scale ) 
         return data
    
-    # ***** HIGH-LEVEL METHOD that performs entire OCT-RECONSTRUCTION *****
+    # ***** HIGH-LEVEL METHODs that performs entire OCT-RECONSTRUCTION *****
+    #-----------------------------------------------------------------
     def _run_reconstruction(self, 
                            buffer: np.ndarray, 
                            disp_coeffs: tuple, 
                            wind_key: str, 
-                           samples_hf_crop: int=0, # gets set to max A-scan sampling in method
+                           samples_hf_crop: int=0,
                            samples_dc_crop: int=0, 
                            scale_fac: int=65, 
                            blck_lvl: int=77,
@@ -85,10 +88,29 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         post_ = self.perform_fft( pre_ )
         return self.perform_post_fft_functions( post_, scale_fac, blck_lvl,
                                                samples_dc_crop, samples_hf_crop, show_scaled_data )
-    
+
+    # -----------------------------------------------------------------------------------------------------
+    def _run_reconstruction_from_json(self, buffer: np.ndarray, json_config_file_path: str) -> np.ndarray : 
+        """ same functionality as _run_reconstruction(), 
+        only that the reconstruction-parameters are parsed from JSON-congig-file """
+        # load config file
+        JSON = ConfigDataManager(filename=json_config_file_path).load_json_file()
+        # perform 3-step recon, using pre-fft-, fft-, and post-fft functions  
+        pre_ = self.perform_pre_fft_functions(buffer=buffer, 
+                                              coeffs=JSON['dispersion_coefficients'], 
+                                              key=JSON['windowing_key'], 
+                                              is_sub_bg=JSON['is_substract_background'])
+        post_ = self.perform_fft( pre_ )
+        return self.perform_post_fft_functions(buffer=post_, 
+                                               fac_scale=JSON['disp_scale_factor'], 
+                                               black_lvl=JSON['black_lvl_for_dis'], 
+                                               crop_lf_samples=JSON['dc_crop_samples'], 
+                                               crop_hf_samples=JSON['hf_crop_samples'], 
+                                               is_scale_data_for_disp=JSON['is_scale_data_for_display'] )
+
     ##########################################
     # ***** low-level processing methods *****
-    ##########################################
+    ##########################################-------------------------------------------------
     def adjust_dim_for_processing(self, buffer: np.ndarray, vector: np.ndarray) -> np.ndarray :
         """ evaluate and prepare buffer and vector for numpy matrix-vector operations """
         if buffer.ndim == 1 :
@@ -224,9 +246,12 @@ class OctReconstructionManager(IO.OctDataFileManager) :
 # for testing and debugging purposes
 if __name__ == '__main__' :
     print("[INFO:] Running from < octreconstructionmanager.py > ...")
-    REC = OctReconstructionManager(dtype_loading='>u2')
-    data = REC.load_oct_data()
-    plt.imshow(np.mean(data))
-    # rec = REC.calculate_enface_for_display(data)
-    # # plt.imshow(rec)
-    plt.show()
+    
+    # path = r"E:\PhillyBackup\PhilippDataAndFiles\4D-OCT\Data\MLRecon_Data\spec_1024x1920x1920.bin"
+    # b_size = 1920*1024
+    # data = np.fromfile(path, count=b_size, offset=1000*b_size, dtype='<u2')
+    # data = np.swapaxes(np.reshape(data, (1920, 1024)), 0, 1)
+    # print(os.path.join(os.path.realpath('..')), 'Config', 'DefaultReconParams')
+    # recon = OctReconstructionManager()._run_reconstruction_from_json(data, os.path.join(os.path.realpath('.'),'Config', 'DefaultReconParams'))
+    # plt.imshow(recon, cmap='gray')
+    # plt.show()
