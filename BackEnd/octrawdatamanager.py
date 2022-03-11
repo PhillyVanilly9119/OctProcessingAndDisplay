@@ -12,14 +12,11 @@
 # global imports
 import re
 import os
-# import sys
 from tqdm import tqdm
 import numpy as np
-# import matplotlib.pyplot as plt #debug
 
 # custom imports
 import octdatafilemanager as IO
-# from recon_funcs import OctReconstructionManager as REC
 
 
 class OctRawDataManager(IO.OctDataFileManager) :
@@ -71,9 +68,6 @@ class OctRawDataManager(IO.OctDataFileManager) :
         else :
             return False
 
-        
-def run():
-    RDM = OctRawDataManager()
-    
+
 if __name__ == "__main__" :
-    run()
+    RDM = OctRawDataManager()
