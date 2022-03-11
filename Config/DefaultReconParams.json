@@ -1,13 +1,13 @@
 {
     "windowing_key": "Hann",
     "dispersion_coefficients": [
-        5,
-        20,
+        -15,
+        4,
         0,
         0
     ],
     "disp_scale_factor": 63.75,
     "black_lvl_for_dis": 85,
-    "dc_crop_samples": 50,
+    "dc_crop_samples": 20,
     "hf_crop_samples": 0   
 }

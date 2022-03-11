@@ -22,7 +22,20 @@ from octdatafilemanager import OctDataFileManager as OctImport
 from octreconstructionmanager import OctReconstructionManager
 from guiconfigdatamanager import ConfigDataManager 
 
+#---------------------------------------
+def find_nearest(array, value) -> tuple:
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return array[idx], idx
+    
+#-----------------------------------------------------------------
+def find_peak_and_fwhm(data: np.array, offset_db: int=3) -> tuple:
+    _, peak = find_nearest(data, np.max(data))
+    _, half_fwhm = find_nearest(data, np.max(data)-offset_db)
+    fwhm = 2*np.abs(half_fwhm-peak)
+    return peak, fwhm
 
+#-------------------------------------------------------------------------------------------------
 def load_detector_signals(path: str, dtype: str='>u2', crop_range: tuple=(300,-20)) -> np.ndarray:
     """ Load all *.bin-files from path """
     files = glob.glob(os.path.join(path + "/*.bin"))
@@ -33,49 +46,14 @@ def load_detector_signals(path: str, dtype: str='>u2', crop_range: tuple=(300,-2
     scans = scans[:, crop_range[0]:crop_range[1]]
     return np.asarray(np.stack(scans, axis=1))
 
-
-def reconstruct_aScans(data_in: np.ndarray, dc_crop: int = 25, nd_filter: int = 3) -> np.ndarray:
-    """ Performs SS-OCT reconstruction on array """
-    # average stack
-    stack = np.mean(data_in, axis=1)
-    aLen = stack.shape[0]
-    # windowing
-    REC = OctReconstructionManager()
-    stack = np.multiply(stack, REC.create_comp_disp_vec(
-        aLen, (5, -30, 0, 0), 'Hann'))
-    # abs of iFFT of padded array
-    stack = np.abs(np.fft.ifft(
-        np.pad(stack, (aLen, 0), mode='constant', constant_values=0)))
-    # scale of first half of complex conjugate F^-1(signal) to 8Bit
-    stack = 20 * np.log10(np.abs(stack[dc_crop:aLen]))
-    ##snr = round(np.max(stack)-np.mean(stack[5000:11000]), 0) + (nd_filter*10)
-    # return a-Scan scaled within dynamic range
-    return np.asarray(stack)
-
-
+#-------------------------------------------
 def find_nearest_min_max_idx(array, value):
     array = np.asarray(array)
     idx_min = (np.abs(array - value)).argmin()
     idx_max = (np.abs(array + value)).argmax()
     return idx_min, idx_max
 
-
-def run():
-    IM = OctImport()
-    all_raw_scans = []
-    all_scans = []
-    all_snrs = []
-    files = glob.glob(os.path.join(IM._tk_folder_selection(), '*/'))
-    for file in files:
-        curr_scans = load_detector_signals(file)
-        all_raw_scans.append(np.mean(curr_scans, axis=1))
-        recon_scan, snr = reconstruct_aScans(curr_scans)
-        all_scans.append(recon_scan)
-        print(snr)
-        all_snrs.append(snr)
-    return np.asarray(all_scans), all_raw_scans, all_snrs
-
-
+#----------------------------------------------------------
 def high_low_envelopes_idxs(s, dmin=1, dmax=1, split=True):
     """
     @param: 
@@ -100,7 +78,6 @@ def high_low_envelopes_idxs(s, dmin=1, dmax=1, split=True):
     return lmin, lmax
 
 # ------------------------------------------------------------------------------------------
-
 def stack_all_scans_from_subdir(main_path: str, is_ret_avrgd_scans: bool=False) -> np.array:
     """  """
     def get_list_of_abs_file_paths(directory):
@@ -120,7 +97,7 @@ def stack_all_scans_from_subdir(main_path: str, is_ret_avrgd_scans: bool=False) 
             stacked_data.append(load_detector_signals(folder))
     return np.swapaxes(np.asarray(stacked_data), 0, 1)
 
-#--------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------
 def plot_all_scans_in_stack(data: np.array, title: str=None, x_label: str=None, y_label: str=None) -> None:
     """ WARNING: asserts data to have shape like 
     expected from stack_all_scans_from_subdir() !!! """
@@ -187,69 +164,12 @@ def plot_all_recon_data(main_path: str, aScan_range: tuple) -> None:
     plt.show()
     return
 
-def plot_2Ascans(sig_path1: str=r"C:\Users\PhilippsLabLaptop\Desktop\RollOff\01", 
-                 sig_path2: str=r"C:\Users\PhilippsLabLaptop\Desktop\RollOff\23") :
-    # load and pre-process OCT signal
-    path1 = sig_path1
-    assert os.path.isdir(path1)
-    signal1 = load_detector_signals(path1)
-    signal1 = signal1-np.mean(signal1, axis=0) # center around 0, for seemless dtype-conversion
-    mean_sig1 = np.mean(signal1-np.mean(signal1, axis=0), axis=1)
-    
-    path2 = sig_path2
-    assert os.path.isdir(path2)
-    signal2 = load_detector_signals(path2)
-    signal2 = signal2-np.mean(signal2, axis=0) # center around 0, for seemless dtype-conversion
-    mean_sig2 = np.mean(signal2-np.mean(signal2, axis=0), axis=1)
-         
-    # reconstruct A-scans
-    REC = OctReconstructionManager()
-    d3 = -15
-    d2 = 4
-    d1, d0 = 0, 0
-    
-    recon_sig1 = REC._run_reconstruction(mean_sig1, (d3, d2, d1, d0),
-                                         'Hann', samples_dc_crop=50,
-                                         scale_fac=63.75, blck_lvl=85)
-    recon_sig2 = REC._run_reconstruction(mean_sig2, (d3, d2, d1, d0),
-                                         'Hann', samples_dc_crop=50,
-                                         scale_fac=63.75, blck_lvl=85)
-    
-    def find_nearest(array, value) -> tuple:
-        array = np.asarray(array)
-        idx = (np.abs(array - value)).argmin()
-        return array[idx], idx
-    
-    _, peak1 = find_nearest(recon_sig1, np.max(recon_sig1))
-    _, half_fwhm1 = find_nearest(recon_sig1, np.max(recon_sig1)-3)
-    fwhm1 = 2*np.abs(half_fwhm1-peak1)
-    print(f"Peak position for scan 1: {peak1}, left most -3dB position: {half_fwhm1}, results in FWHM: {fwhm1}[pxls]")
-    
-    _, peak2 = find_nearest(recon_sig2, np.max(recon_sig2))
-    _, half_fwhm2 = find_nearest(recon_sig2, np.max(recon_sig2)-3)
-    fwhm2 = 2*np.abs(half_fwhm1-peak2)
-    print(f"Peak position for scan 1: {peak2}, left most -3dB position: {half_fwhm2}, results in FWHM: {fwhm2}[pxls]")
-    
-    # plot
-    print(mean_sig1.shape, mean_sig2.shape)
-    fig, ax = plt.subplots(2, 1)
-    ax[0].plot(signal1[:,0], label = 'OCT Fringe Signal')
-    ax[0].plot(mean_sig1, label='Averaged 1st OCT Fringe Signal')
-    ax[0].plot(signal2[:,0], label = 'OCT Fringe Signal')
-    ax[0].plot(mean_sig2, label='Averaged 2nd OCT Fringe Signal')
-    ax[0].legend(loc='lower left')
-    # envelopes
-    
-    ax[1].plot(recon_sig1, label = 'OCT Fringe Signal No. 1')
-    # ax[0,0].plot(mean_sig1, label='Averaged 1st OCT Fringe Signal')
-    ax[1].plot(recon_sig2, label = 'OCT Fringe Signal No. 2')
-    # ax[0,0].plot(mean_sig2, label='Averaged 1st OCT Fringe Signal')
-    ax[1].legend(loc='lower left')    
-    plt.show()
+#------------------------
+# TODO: continue here
     
 
-def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Desktop\RollOff\01", 
-                              bg_path: str=r"C:\Users\PhilippsLabLaptop\Desktop\RollOff\23") :
+def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Downloads\Signal", 
+                              bg_path: str=r"C:\Users\PhilippsLabLaptop\Downloads\Background") :
     # load and pre-process OCT signal
     path = sig_path
     assert os.path.isdir(path)
@@ -274,16 +194,23 @@ def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Desktop
         
     # reconstruct A-scans
     REC = OctReconstructionManager()
-    d3 = -15
-    d2 = 4
-    d1, d0 = 0, 0
-    
-    subbed_recon_sig = REC._run_reconstruction(subbed_mean_sig, (d3, d2, d1, d0),
-                                        'Hann', samples_dc_crop=50,
-                                        scale_fac=63.75, blck_lvl=85)
-    recon_sig = REC._run_reconstruction(mean_sig, (d3, d2, d1, d0),
-                                        'Hann', samples_dc_crop=50,
-                                        scale_fac=63.75, blck_lvl=85)
+    JSON = ConfigDataManager(filename='DefaultReconParams').load_json_file()
+    subbed_recon_sig = REC._run_reconstruction(subbed_mean_sig, 
+                                               disp_coeffs = JSON['dispersion_coefficients'], 
+                                               wind_key = JSON['windowing_key'],
+                                               samples_hf_crop = JSON['hf_crop_samples'], 
+                                               samples_dc_crop = JSON['dc_crop_samples'],
+                                               blck_lvl = JSON['black_lvl_for_dis'], 
+                                               scale_fac = JSON['disp_scale_factor']
+                                               )
+    recon_sig = REC._run_reconstruction(mean_sig, 
+                                        disp_coeffs = JSON['dispersion_coefficients'], 
+                                        wind_key = JSON['windowing_key'],
+                                        samples_hf_crop = JSON['hf_crop_samples'], 
+                                        samples_dc_crop = JSON['dc_crop_samples'],
+                                        blck_lvl = JSON['black_lvl_for_dis'], 
+                                        scale_fac = JSON['disp_scale_factor']
+                                        )
     
     def find_nearest(array, value) -> tuple:
         array = np.asarray(array)
@@ -302,30 +229,33 @@ def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Desktop
     ax[0,0].plot(mean_sig, label='Averaged OCT Fringe Signal')
     ax[0,0].plot(background[:,0], label='OCT Background Signal')
     ax[0,0].plot(mean_bg, label='Averaged OCT Background Signal')
+    ax[0,0].plot(lmax_sig, mean_sig[lmax_sig], 'deeppink', label='Maximum Envelope', linewidth=3)
+    ax[0,0].plot(lmin_sig, mean_sig[lmin_sig], 'lawngreen', label='Minimum Envelope', linewidth=3)
     ax[0,0].legend(loc='lower left')
+    ax[0,0].set_title("OCT raw fringes")
     # envelopes
-    ax[0,1].plot(mean_sig, label='Averaged OCT Fringe Signal')
-    ax[0,1].plot(lmax_sig, mean_sig[lmax_sig], 'g', label='Maximum Envelope')
-    ax[0,1].plot(lmin_sig, mean_sig[lmin_sig], 'r', label='Minimum Envelope')
-    ax[0,1].legend(loc='lower left')
-    # zoom-in on [0,0]
-    ax[1,0].plot(signal[:recon_sig.shape[0]//50, 0] - np.mean(signal[:, 0]), label="OCT Fringe Signal")
-    ax[1,0].plot(background[:recon_sig.shape[0]//50, 0] - np.mean(background[:, 0]), label="OCT Background Signal")
-    ax[1,0].plot(subbed_sig[:recon_sig.shape[0]//50], label="OCT Fringe Signal - Background subtracted")
-    ax[1,0].plot(subbed_mean_sig[:recon_sig.shape[0]//50], label="Background subtracted mean signal - mean(signal)-mean(background)")
+    ax[0,1].plot(recon_sig, label=f"Reconstructed Averaged A-scan")  
+    ax[0,1].plot(subbed_recon_sig, label=f"Reconstructed Averaged & BG-subbed A-scan")
+    ax[0,1].legend(loc="upper right")
+    ax[0,1].set_title("Reconstructed Averged A-scans")
+    # zoom-in on fringes
+    ax[1,0].plot(signal[:signal.shape[0]//50, 0] - np.mean(signal[:, 0]), label="OCT Fringe Signal")
+    ax[1,0].plot(background[:background.shape[0]//50, 0] - np.mean(background[:, 0]), label="OCT Background Signal")
+    ax[1,0].plot(subbed_sig[:subbed_sig.shape[0]//50], label="OCT Fringe Signal - Background subtracted")
+    ax[1,0].plot(subbed_mean_sig[:subbed_mean_sig.shape[0]//50], label="Background subtracted mean signal - mean(signal)-mean(background)")
     ax[1,0].legend(loc='lower left')
-    
-    ax[1,1].plot(recon_sig[:recon_sig.shape[0]//10], label=f"Reconstructed Averaged A-scan\n({d3},{d2},0,0) and a\nFWHM of {fwhm*1.1}µm [{fwhm}pxls]")  
-    ax[1,1].plot(subbed_recon_sig[:1500], label=f"Reconstructed Averaged & BG-subbed A-scan\n({d3},{d2},0,0) and a\nFWHM of {fwhm*1.1}µm [{fwhm}pxls]")
+    ax[1,0].set_title("Zoom-in on OCT raw fringes")
+    # zoom-in on rconstructed signal
+    ax[1,1].plot(recon_sig[:recon_sig.shape[0]//10], label=f"Reconstructed Averaged A-scan\n({JSON['dispersion_coefficients']}) and a FWHM of\n{fwhm*1.1}µm [{fwhm}pxls] (air -> n=1)\n({round(fwhm*1.1/1.36, 2)}µm (tissue -> n=1.36)")  
+    ax[1,1].plot(subbed_recon_sig[:1500], label=f"Reconstructed Averaged & BG-subbed A-scan\n({JSON['dispersion_coefficients']}) and a FWHM of\n{fwhm*1.1}µm [{fwhm}pxls] (air -> n=1)\n({round(fwhm*1.1/1.36, 2)}µm (tissue -> n=1.36)")
     ax[1,1].legend(loc='upper left')
+    ax[1,1].set_title("Zoom-in on Reconstructed Averged A-scans with Axial Resolution")
     
     plt.show()
       
 
 if __name__ == '__main__':
-    plot_all_recon_data(r'C:\Users\PhilippsLabLaptop\Desktop\RollOff\600kHz', aScan_range=(0, 0))
-    
-    # plot_ascan_and_background(sig_path=r"C:\Users\PhilippsLabLaptop\Downloads\Signal",
-    #                           bg_path=r"C:\Users\PhilippsLabLaptop\Downloads\Background")
-    # plot_2Ascans(sig_path1=r"C:\Users\PhilippsLabLaptop\Desktop\RollOff\100kHz\01",
-    #              sig_path2=r"C:\Users\PhilippsLabLaptop\Desktop\RollOff\100kHz\23")
+    plot_all_recon_data(r'C:\Users\PhilippsLabLaptop\Desktop\RollOff\100kHz', aScan_range=(0, 0))
+    # plot_ascan_and_background(sig_path=r"C:\Users\PhilippsLabLaptop\Desktop\RollOff\600kHz\01", 
+    #                           bg_path=None)
+    # plot_ascan_and_background()
