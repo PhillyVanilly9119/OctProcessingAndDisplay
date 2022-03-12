@@ -246,12 +246,12 @@ class OctReconstructionManager(IO.OctDataFileManager) :
 # for testing and debugging purposes
 if __name__ == '__main__' :
     print("[INFO:] Running from < octreconstructionmanager.py > ...")
-    
-    # path = r"E:\PhillyBackup\PhilippDataAndFiles\4D-OCT\Data\MLRecon_Data\spec_1024x1920x1920.bin"
-    # b_size = 1920*1024
-    # data = np.fromfile(path, count=b_size, offset=1000*b_size, dtype='<u2')
-    # data = np.swapaxes(np.reshape(data, (1920, 1024)), 0, 1)
-    # print(os.path.join(os.path.realpath('..')), 'Config', 'DefaultReconParams')
-    # recon = OctReconstructionManager()._run_reconstruction_from_json(data, os.path.join(os.path.realpath('.'),'Config', 'DefaultReconParams'))
-    # plt.imshow(recon, cmap='gray')
-    # plt.show()
+
+    path = r"E:\PhillyBackup\PhilippDataAndFiles\4D-OCT\Data\MLRecon_Data\spec_1024x1920x1920.bin"
+    b_size = 1920*1024
+    data = np.fromfile(path, count=b_size, offset=1000*b_size, dtype='<u2')
+    data = np.swapaxes(np.reshape(data, (1920, 1024)), 0, 1)
+    print(os.path.join(os.path.realpath('..')), 'Config', 'DefaultReconParams')
+    recon = OctReconstructionManager()._run_reconstruction_from_json(data, os.path.join(os.path.realpath('.'),'Config', 'DefaultReconParams'))
+    plt.imshow(recon, cmap='gray')
+    plt.show()

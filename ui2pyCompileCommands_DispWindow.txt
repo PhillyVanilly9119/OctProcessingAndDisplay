@@ -1,0 +1,1 @@
+python -m PyQt5.uic.pyuic -x "C:\Users\phili\Documents\Coding\Repositories\OctProcessingAndDisplay\dispersionsettingwindow.ui" -o "C:\Users\phili\Documents\Coding\Repositories\OctProcessingAndDisplay\FrontEnd\dispersionsettingwindow.py" 
