@@ -20,7 +20,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 
 
 from octdatafilemanager import OctDataFileManager as OctImport
 from octreconstructionmanager import OctReconstructionManager
-from guiconfigdatamanager import ConfigDataManager 
+from configdatamanager import ConfigDataManager 
 
 #---------------------------------------
 def find_nearest(array, value) -> tuple:
@@ -169,7 +169,8 @@ def plot_all_recon_data(main_path: str, aScan_range: tuple) -> None:
     
 
 def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Downloads\Signal", 
-                              bg_path: str=r"C:\Users\PhilippsLabLaptop\Downloads\Background") :
+                              bg_path: str=r"C:\Users\PhilippsLabLaptop\Downloads\Background",
+                              diff_2fwhm: int=12, pixel_pitch: float=2.84) :
     # load and pre-process OCT signal
     path = sig_path
     assert os.path.isdir(path)
@@ -218,7 +219,7 @@ def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Downloa
         return array[idx], idx
     
     _, peak = find_nearest(recon_sig, np.max(recon_sig))
-    _, half_fwhm = find_nearest(recon_sig, np.max(recon_sig)-3)
+    _, half_fwhm = find_nearest(recon_sig, np.max(recon_sig)-diff_2fwhm)
     fwhm = 2*np.abs(half_fwhm-peak)
     print(f"peak position: {peak}, left most -3dB position: {half_fwhm}, results in FWHM: {fwhm}[pxls]")
     
@@ -246,16 +247,16 @@ def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Downloa
     ax[1,0].legend(loc='lower left')
     ax[1,0].set_title("Zoom-in on OCT raw fringes")
     # zoom-in on rconstructed signal
-    ax[1,1].plot(recon_sig[:recon_sig.shape[0]//10], label=f"Reconstructed Averaged A-scan\n({JSON['dispersion_coefficients']}) and a FWHM of\n{fwhm*1.1}µm [{fwhm}pxls] (air -> n=1)\n({round(fwhm*1.1/1.36, 2)}µm (tissue -> n=1.36)")  
-    ax[1,1].plot(subbed_recon_sig[:1500], label=f"Reconstructed Averaged & BG-subbed A-scan\n({JSON['dispersion_coefficients']}) and a FWHM of\n{fwhm*1.1}µm [{fwhm}pxls] (air -> n=1)\n({round(fwhm*1.1/1.36, 2)}µm (tissue -> n=1.36)")
-    ax[1,1].legend(loc='upper left')
+    ax[1,1].plot(recon_sig[:recon_sig.shape[0]//10], label=f"Reconstructed Averaged A-scan\n({JSON['dispersion_coefficients']}) and a FWHM of\n{round(fwhm*pixel_pitch, 2)}µm [{fwhm}pxls] (air -> n=1)\n({round(fwhm*pixel_pitch/1.36, 2)}µm (tissue -> n=1.36)")  
+    ax[1,1].plot(subbed_recon_sig[:1500], label=f"Reconstructed Averaged & BG-subbed A-scan\n({JSON['dispersion_coefficients']}) and a FWHM of\n{round(fwhm*pixel_pitch, 2)}µm [{fwhm}pxls] (air -> n=1)\n({round(fwhm*pixel_pitch/1.36, 2)}µm (tissue -> n=1.36)")
+    ax[1,1].legend(loc='upper right')
     ax[1,1].set_title("Zoom-in on Reconstructed Averged A-scans with Axial Resolution")
     
     plt.show()
       
 
 if __name__ == '__main__':
-    plot_all_recon_data(r'C:\Users\PhilippsLabLaptop\Desktop\RollOff\100kHz', aScan_range=(0, 0))
-    # plot_ascan_and_background(sig_path=r"C:\Users\PhilippsLabLaptop\Desktop\RollOff\600kHz\01", 
-    #                           bg_path=None)
+    # plot_all_recon_data(r'C:\Users\PhilippsLabLaptop\Desktop\RollOff\100kHz', aScan_range=(0, 0))
+    plot_ascan_and_background(sig_path=r"C:\Users\PhilippsLabLaptop\Desktop\RollOff\600kHz\01", 
+                              bg_path=None)
     # plot_ascan_and_background()
