@@ -11,6 +11,7 @@
 """
 
 # global imports
+import cmath
 import os
 import sys
 import cv2
@@ -25,7 +26,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'Config')))
 
 from octreconstructionmanager import OctReconstructionManager 
-from guiconfigdatamanager import ConfigDataManager 
+from configdatamanager import ConfigDataManager 
 
 
 def display_reconstructed_oct_volume( data_shape: tuple=(5312, 512, 512) ) -> np.array :
@@ -89,7 +90,7 @@ def process_buffer_wise(REC, JSON, dims, dims_saving, full_file_path_raw, full_f
         with open(full_file_path_raw, 'rb') as f_raw:
             count = b_scan_raw_in_bytes # file size in bytes
             offset = ((c_len + b_scan_start_idx) % dims[-1]) * b_scan_raw_in_bytes # offset in bytes
-            print('\n', count, offset, offset//(dims[0]*dims[1]))
+            # print('\n', count, offset, offset//(dims[0]*dims[1]))
             raw_buffer = np.fromfile(full_file_path_raw, count=count, offset=offset, dtype='<u2')
             raw_buffer = np.reshape(raw_buffer, (dims[1],dims[0]))
             raw_buffer = raw_buffer.swapaxes(0,1)
@@ -105,11 +106,16 @@ def process_buffer_wise(REC, JSON, dims, dims_saving, full_file_path_raw, full_f
                                                    blck_lvl = JSON['black_lvl_for_dis'], 
                                                    scale_fac = JSON['disp_scale_factor']
                                                    )
+            if c_len == 216:
+                bIdx = 216
+                print(f"Writing... {np.size(raw_buffer[:,bIdx-3:bIdx+3])} bytes for brightest A-scan")
+                raw_buffer[:,bIdx-3:bIdx+3].tofile(full_file_path_raw.split('.bin')[0] + '_scans.bin')
+            if c_len == dims[-1]//2:
+                middle_bSacan = recon_buffer
             if is_return_enface: # append B-scan projection to enface array
-                enface[:,c_len] = np.mean(recon_buffer[:recon_buffer.shape[0]//2], axis=0)
+                enface[:,c_len] = np.mean(recon_buffer, axis=0)
+                # enface[:,c_len] = np.mean(recon_buffer[:recon_buffer.shape[0]//2], axis=0)
             data_size += raw_buffer.size * raw_buffer.itemsize # counter increment of current recon-buffer size 
-            # plt.imshow(cv2.resize(recon_buffer, (500,1000)))
-            # plt.show()
         # Save to file in binary append mode
         with open(full_file_path_recon, 'a+b') as f:
             recon_buffer.tofile(f)
@@ -119,17 +125,39 @@ def process_buffer_wise(REC, JSON, dims, dims_saving, full_file_path_raw, full_f
     # display processing time of entire volume
     print(f"Processing took {time.perf_counter()-t1}s")
     if is_return_enface:
-        return enface
-    return
+        return enface, middle_bSacan
+    return middle_bSacan
+
+def create_raw_enface(path: str, dims: tuple, b_scan_start_idx: int) -> None:
+    """ @param: """
+    enface = []
+    for c_len in range(dims[-1]):
+    # open raw file, move pointer to current B-scan and reconstruct
+        b_scan_raw_in_bytes = dims[0] * dims[1]
+        count = b_scan_raw_in_bytes # file size in bytes
+        offset = ((c_len + b_scan_start_idx) % dims[-1]) * b_scan_raw_in_bytes # offset in bytes
+        # print('\n', count, offset, offset//(dims[0]*dims[1]))
+        with open(path, 'rb') as f_raw:
+            raw_buffer = np.fromfile(path, count=count, offset=offset, dtype='<u2')
+            raw_buffer = np.reshape(raw_buffer, (dims[-1],dims[0]))
+            raw_buffer = raw_buffer.swapaxes(0,1)
+            # raw_buffer = np.roll(raw_buffer, 255, axis=1)
+            # if c_len % 2 == 0:
+            #     raw_buffer = np.roll(raw_buffer, raw_buffer.shape[1]//2, axis=1)
+        enface.append(np.mean(raw_buffer, axis=0))
+    return np.asarray(enface)
 
 def run() -> None:
-    bScan_strt_idx = 110
-    enface = reconstruct_and_save_volume_2disk(r"\\samba\p_Zeiss\Projects\4D OCT\Wetlabs\17_12_2021\RasterCaptureScans", 
-                                               "rasterVol01_13312x512x512.bin", 
-                                               bScan_strt_idx=bScan_strt_idx)
-    plt.imshow(enface)
+    bScan_strt_idx = 0
+    enface, m_bScan = reconstruct_and_save_volume_2disk(r"D:\100kHz_RollOff", 
+                                                        "rasterVol01_13312x512x512_01.bin", 
+                                                        bScan_strt_idx=bScan_strt_idx)
+    # enface = create_raw_enface(r"D:\100kHz_RollOff\rasterVol01_13312x512x512_00.bin", (13312, 512, 512), 0)
+    print(np.where(enface == np.amax(enface)))
+    fig, ax = plt.subplots(1,2)
+    ax[0].imshow(enface)
+    ax[1].imshow(m_bScan)
     plt.show()
-    # cube = load_reconstructed_oct_volume( (13312, 512, 512) )
     
 # for testing and debugging purposes
 if __name__ == '__main__' :
