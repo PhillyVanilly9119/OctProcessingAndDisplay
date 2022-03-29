@@ -10,8 +10,10 @@
 
 
 import os
+import cv2
 import sys
 import glob
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -109,6 +111,20 @@ def plot_all_scans_in_stack(data: np.array, title: str=None, x_label: str=None, 
         plt.ylabel(y_label)
     return fig
 
+#------------------------------------------------
+def load_uncropped_aScans(path: str, shape: tuple, dtype: str='<u2') -> np.array:
+    """  """
+    all_files = glob.glob(path + "/*.bin")
+    data_stack = []
+    for file in all_files:
+        data_block = np.fromfile(file, dtype=dtype)
+        data_block = np.reshape(np.asarray(data_block), shape)
+        background = np.array(np.mean(data_block, axis=-1), dtype=np.float32)
+        aScan = np.array(data_block[:, data_block.shape[1]//2], np.float32)
+        np.subtract(aScan, background, dtype=np.float32)
+        data_stack.append(np.subtract(aScan, background, dtype=np.float32))
+    return np.asarray(data_stack)
+
 #-------------------------------------------------------------
 def crop_data_range(data: np.array, range: tuple) -> np.array:
     """ @return: A-scan cropped array, depending on range vals """
@@ -122,52 +138,87 @@ def crop_data_range(data: np.array, range: tuple) -> np.array:
     else:
         return data[range[0]:range[1]] # none are 0 -> crop range
     
-#-----------------------------------------------------------------------------
-def plot_all_raw_data(main_path: str, is_ret_avrgd_scans: bool, aScan_range: tuple) -> None:
-    """ Meant to visualize the plot in function body """
-    data = stack_all_scans_from_subdir(main_path, is_ret_avrgd_scans=is_ret_avrgd_scans)
-    data = crop_data_range(data, aScan_range)
-    fig = plot_all_scans_in_stack(data, 
-                                  title='Raw patterns (unprocessed OCT fringes)',
-                                  x_label="Frequency Samples [a.u.]", 
-                                  y_label="Relative signal strength [a.u. - samples]")
-    plt.show()
-    return
 
 #-----------------------------------------------------------------------------
-def plot_all_recon_data(main_path: str, aScan_range: tuple) -> None:
+def plot_all_recon_data(data: np.array, aScan_range: tuple) -> None:
     """ Meant to visualize the plot in function body """
-    data = stack_all_scans_from_subdir(main_path, is_ret_avrgd_scans=True)
     recon_data = []
-    JSON = ConfigDataManager(filename='DefaultReconParams').load_json_file()
     REC = OctReconstructionManager()
     for scan in range(data.shape[1]):
-        d3 = -15
-        d2 = 4
-        samples_dc_crop = 25
-        recon_data.append(REC._run_reconstruction(data[:,scan], 
-                                                  disp_coeffs = JSON['dispersion_coefficients'], 
-                                                  wind_key = JSON['windowing_key'],
-                                                  samples_hf_crop = JSON['hf_crop_samples'], 
-                                                  samples_dc_crop = JSON['dc_crop_samples'],
-                                                  blck_lvl = JSON['black_lvl_for_dis'], 
-                                                  scale_fac = JSON['disp_scale_factor']
-                                                  )
-                          )
+        recon_scan = REC._run_reconstruction_from_json(data[:,scan], 'DefaultReconParams')
+        recon_data.append(recon_scan)
     recon_data = np.swapaxes(recon_data, 0, 1)
     data = crop_data_range(recon_data, aScan_range)
-    # recon_data = recon_data[:,:10]
+    JSON = ConfigDataManager(filename='DefaultReconParams').load_json_file()
+    dc_crop = JSON['dc_crop_samples']
     fig = plot_all_scans_in_stack(recon_data, 
-                                  title=f'Reconstructed OCT Signals (cropped DC samples = ({data.shape[0]-samples_dc_crop}/{data.shape[0]}))',
+                                  title=f'Reconstructed OCT Signals (cropped DC samples = ({data.shape[0]-dc_crop}/{data.shape[0]}))',
                                   x_label="Optical Depth [a.u.]", 
-                                  y_label="Relative Signal Strength [dB (0-255)]")
+                                  y_label="Relative Signal Strength [uint8-range-mapped (0-255)]"
+                                  )
     plt.show()
-    return
+    return recon_data
 
-#------------------------
-# TODO: continue here
+#----------------------------------------------------------------------------------------------------------
+def plot_enfaces(data: np.array, aScan_range: tuple, img_name: str='', json_file_name: str="DefaultReconParams", 
+                 is_save_img: bool=False, is_save_data: bool=False) -> np.array:
+    """ Visualiazes the en face images of a raw and the corresponding reconstructed volume"""
+    REC = OctReconstructionManager()
+    print("[INFO:] Generating raw en face...")
+    raw_enface = np.mean(data, axis=0)
+    print("[INFO:] Done!")
+    print("[INFO:] Reconstructing entire OCT volume (this may take some time...)")
+    t1 = time.perf_counter()
+    recon_data = REC._run_reconstruction_from_json(data, json_file_name)
+    print(f"[INFO:] Done! (Took {round(time.perf_counter()-t1,2)} secs)")
+    print("[INFO:] Generating en face from reconstructed volume...")
+    recon_enface = np.mean(recon_data[200:], axis=0)
+    print("[INFO:] Done!")
     
+    recon_maxes = np.squeeze(np.argwhere(recon_enface.max() == recon_enface))
+    raw_mins = np.squeeze(np.argwhere(raw_enface.min() == raw_enface))
+    # print( recon_maxes[0], raw_mins[0], int(np.floor( (recon_maxes[0]+raw_mins[0])//2)) )
+    pxl_offset = 2
+    x_centroid = int(recon_maxes[1])
+    y_centroid = int(recon_maxes[0])
+    print(x_centroid, y_centroid)
+    if x_centroid % data.shape[1] <= pxl_offset:
+        x_centroid = x_centroid - (x_centroid % data.shape[1])
+    if y_centroid % data.shape[2] <= pxl_offset:
+        y_centroid = y_centroid - (y_centroid % data.shape[2])
+    print(x_centroid, y_centroid)
+    
+    # --- Plotting ---
+    fig, ax = plt.subplots(1,4, figsize=(19.2,10.8), dpi=100)
+    ax[0].imshow(raw_enface, cmap='gray')
+    ax[0].axis('off')
+    ax[0].set_title("Raw ENFACE")
+    
+    ax[1].imshow(recon_enface, cmap='gray')
+    circle = plt.Circle((x_centroid, y_centroid), pxl_offset, color='b')
+    ax[1].add_patch(circle)
+    ax[1].axis('off')
+    ax[1].set_title("Recon ENFACE")
+    
+    ax[2].imshow(cv2.resize(np.mean(recon_data[:,x_centroid-pxl_offset:x_centroid+pxl_offset,:], axis=1), (1000,2000)), cmap='gray')
+    ax[2].axis('off')
+    ax[2].set_title("Middle B-scan (X-Centroid) of reconstructed volume")
+     
+    ax[3].imshow(cv2.resize(np.mean(recon_data[:,:,y_centroid-pxl_offset:y_centroid+pxl_offset], axis=2), (1000,2000)), cmap='gray')
+    ax[3].axis('off')
+    ax[3].set_title("Middle B-scan (Y-Centroid) of reconstructed volume")
+    
+    plt.show()
+    
+    # --- Post-Processing ---
+    print(f"Saving A-scans with indices: X = {x_centroid-1} to {x_centroid+1} and Y = {y_centroid-1} to {y_centroid+1}")
+    if is_save_img:
+        plt.savefig(img_name)
+    if is_save_data:
+        data[:, x_centroid-pxl_offset:x_centroid+pxl_offset, y_centroid-pxl_offset:y_centroid+pxl_offset].astype('<u2').tofile(img_name.split('.png')[0] + '.bin')
 
+    
+#---------------------------------------------------------------------------------------------
 def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Downloads\Signal", 
                               bg_path: str=r"C:\Users\PhilippsLabLaptop\Downloads\Background",
                               diff_2fwhm: int=12, pixel_pitch: float=2.84) :
@@ -195,23 +246,8 @@ def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Downloa
         
     # reconstruct A-scans
     REC = OctReconstructionManager()
-    JSON = ConfigDataManager(filename='DefaultReconParams').load_json_file()
-    subbed_recon_sig = REC._run_reconstruction(subbed_mean_sig, 
-                                               disp_coeffs = JSON['dispersion_coefficients'], 
-                                               wind_key = JSON['windowing_key'],
-                                               samples_hf_crop = JSON['hf_crop_samples'], 
-                                               samples_dc_crop = JSON['dc_crop_samples'],
-                                               blck_lvl = JSON['black_lvl_for_dis'], 
-                                               scale_fac = JSON['disp_scale_factor']
-                                               )
-    recon_sig = REC._run_reconstruction(mean_sig, 
-                                        disp_coeffs = JSON['dispersion_coefficients'], 
-                                        wind_key = JSON['windowing_key'],
-                                        samples_hf_crop = JSON['hf_crop_samples'], 
-                                        samples_dc_crop = JSON['dc_crop_samples'],
-                                        blck_lvl = JSON['black_lvl_for_dis'], 
-                                        scale_fac = JSON['disp_scale_factor']
-                                        )
+    subbed_recon_sig = REC._run_reconstruction_from_json(subbed_mean_sig, 'DefaultReconParams')
+    recon_sig = REC._run_reconstruction(mean_sig, 'DefaultReconParams')
     
     def find_nearest(array, value) -> tuple:
         array = np.asarray(array)
@@ -223,7 +259,8 @@ def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Downloa
     fwhm = 2*np.abs(half_fwhm-peak)
     print(f"peak position: {peak}, left most -3dB position: {half_fwhm}, results in FWHM: {fwhm}[pxls]")
     
-    # plot
+    # --- Plot ---
+    JSON = ConfigDataManager('DefaultReconParams').load_json_file() 
     fig, ax = plt.subplots(2, 2)
     # raw data - SIG/BG single and averaged
     ax[0,0].plot(signal[:,0], label = 'OCT Fringe Signal')
@@ -235,8 +272,8 @@ def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Downloa
     ax[0,0].legend(loc='lower left')
     ax[0,0].set_title("OCT raw fringes")
     # envelopes
-    ax[0,1].plot(recon_sig, label=f"Reconstructed Averaged A-scan")  
-    ax[0,1].plot(subbed_recon_sig, label=f"Reconstructed Averaged & BG-subbed A-scan")
+    ax[0,1].plot(recon_sig, label="Reconstructed Averaged A-scan")  
+    ax[0,1].plot(subbed_recon_sig, label="Reconstructed Averaged & BG-subbed A-scan")
     ax[0,1].legend(loc="upper right")
     ax[0,1].set_title("Reconstructed Averged A-scans")
     # zoom-in on fringes
@@ -251,12 +288,30 @@ def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Downloa
     ax[1,1].plot(subbed_recon_sig[:1500], label=f"Reconstructed Averaged & BG-subbed A-scan\n({JSON['dispersion_coefficients']}) and a FWHM of\n{round(fwhm*pixel_pitch, 2)}µm [{fwhm}pxls] (air -> n=1)\n({round(fwhm*pixel_pitch/1.36, 2)}µm (tissue -> n=1.36)")
     ax[1,1].legend(loc='upper right')
     ax[1,1].set_title("Zoom-in on Reconstructed Averged A-scans with Axial Resolution")
-    
+    # show all subplots
     plt.show()
       
 
+def run() -> None:
+    """  """
+    print("[Info:] Running from    < sensitivityprocessing.py >    ... ")
+    path = r"/home/zeiss/Data_Tachyoptes/RasterScanData/RollOff100_2"
+    files = glob.glob(path + '/*bin')
+    for file in files:
+        REC = OctReconstructionManager()
+        dims, _ = REC.get_oct_volume_dims(file)
+        data = np.fromfile(file, dtype='<u2')
+        print(file)
+        data = np.reshape(data, (dims[-1], dims[1], dims[0]))
+        data = np.rollaxis(data, -1)
+        print(data.shape)
+        img_name = file.split('.bin')[0] + '_project.png'
+        cropped_scans = plot_enfaces(data, (0,0), img_name=img_name, 
+                                     is_save_img=True, is_save_data=False)
+
 if __name__ == '__main__':
-    # plot_all_recon_data(r'C:\Users\PhilippsLabLaptop\Desktop\RollOff\100kHz', aScan_range=(0, 0))
-    plot_ascan_and_background(sig_path=r"C:\Users\PhilippsLabLaptop\Desktop\RollOff\600kHz\01", 
-                              bg_path=None)
-    # plot_ascan_and_background()
+    run()
+    # path = r"/home/zeiss/Data_Tachyoptes/RasterScanData/100kHzAscans"
+    # raw_scans = load_uncropped_aScans(path, (13312, 4))
+    # raw_scans = np.swapaxes(raw_scans, 0, 1)
+    # recon_data = plot_all_recon_data(raw_scans, (0,0))
