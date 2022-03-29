@@ -12,6 +12,8 @@
 
 # global imports
 import cmath
+from distutils import file_util
+from glob import glob
 import os
 import sys
 import cv2
@@ -41,7 +43,12 @@ def display_reconstructed_oct_volume( data_shape: tuple=(5312, 512, 512) ) -> np
     plt.show()
     return 
 
-def reconstruct_and_save_volume_2disk(file_path: str, file_name_raw: str, bScan_strt_idx: int=110, is_return_enface: str=True, file_name_recon: str=None, file_name_json_recon_params: str="DefaultReconParams") -> np.array:
+def reconstruct_and_save_volume_2disk(file_path: str, file_name_raw: str, file_name_recon: str=None, 
+                                      file_name_json_recon_params: str="DefaultReconParams",
+                                      bScan_strt_idx: int=110, 
+                                      is_return_enface: str=True,
+                                      is_save_2disk: bool=False, 
+                                      is_save_brightest_aScan: bool=False, max_idxs: tuple=None) -> np.array:
     """ @param: """
     # initialize file name for saving recon volume
     if file_name_recon is None:
@@ -69,12 +76,20 @@ def reconstruct_and_save_volume_2disk(file_path: str, file_name_raw: str, bScan_
     dims_saving = (dims[0]-int(JSON['dc_crop_samples'])-int(JSON['hf_crop_samples']), dims[1], dims[2]) 
     # create file to save to
     full_file_path_recon = os.path.join(file_path, parse_prefixes_file_dims(file_name_recon) + str(dims_saving[0]) + 'x' + str(dims_saving[1]) + 'x' + str(dims_saving[2]) + '.bin')
-    if is_return_enface:
-        return process_buffer_wise(REC, JSON, dims, dims_saving, full_file_path_raw, full_file_path_recon, b_scan_start_idx=bScan_strt_idx)
-    process_buffer_wise(REC, JSON, dims, dims_saving, full_file_path_raw, full_file_path_recon, is_return_enface=is_return_enface, b_scan_start_idx=bScan_strt_idx)
-    return
+    # returns tuple with middle B-scan and en face OR just enface, depending on flag "is_return_enface" 
+    recon_data = process_buffer_wise(REC, JSON, 
+                                     dims, dims_saving, 
+                                     full_file_path_raw, full_file_path_recon, 
+                                     is_return_enface=is_return_enface, 
+                                     b_scan_start_idx=bScan_strt_idx,
+                                     is_save_2disk=is_save_2disk,
+                                     is_save_brightest_aScan=is_save_brightest_aScan,
+                                     max_idxs=max_idxs)
+    return recon_data
 
-def process_buffer_wise(REC, JSON, dims, dims_saving, full_file_path_raw, full_file_path_recon, b_scan_start_idx=500, is_return_enface=True) -> None:
+def process_buffer_wise(REC, JSON, dims, dims_saving, full_file_path_raw, full_file_path_recon, 
+                        b_scan_start_idx: int=0, is_save_2disk: bool=False, is_save_brightest_aScan: bool=False,
+                        max_idxs: tuple=None, is_return_enface=True) -> None:
     """ @param: """
     # pre-loop vars for data and proc.-time measurements 
     t1 = time.perf_counter()
@@ -106,27 +121,35 @@ def process_buffer_wise(REC, JSON, dims, dims_saving, full_file_path_raw, full_f
                                                    blck_lvl = JSON['black_lvl_for_dis'], 
                                                    scale_fac = JSON['disp_scale_factor']
                                                    )
-            if c_len == 216:
-                bIdx = 216
-                print(f"Writing... {np.size(raw_buffer[:,bIdx-3:bIdx+3])} bytes for brightest A-scan")
-                raw_buffer[:,bIdx-3:bIdx+3].tofile(full_file_path_raw.split('.bin')[0] + '_scans.bin')
-            if c_len == dims[-1]//2:
-                middle_bSacan = recon_buffer
-            if is_return_enface: # append B-scan projection to enface array
-                enface[:,c_len] = np.mean(recon_buffer, axis=0)
-                # enface[:,c_len] = np.mean(recon_buffer[:recon_buffer.shape[0]//2], axis=0)
+            # option to save max-index scans to disk - needs max_idxs as tuple with pos. of brightest A-scans
+            if is_save_brightest_aScan:
+                assert len(max_idxs) == 2
+                if c_len == max_idxs[0]:
+                    print(f"\nWriting brightest A-scan with pos={max_idxs} and {np.size(raw_buffer[:,max_idxs[1]])*2} bytes to disk")
+                    with open(full_file_path_raw.split('.bin')[0] + '_RawAscans.bin', 'a+b') as f_aScan: # Save to file in binary append mode
+                        raw_buffer[:,max_idxs[1]].astype('<u2').tofile(f_aScan)
+            # assign middle B-scan to return var @return=middle_bScan
+            if c_len == (dims[-1]//2)-1:
+                middle_bScan = recon_buffer
+            # option to create enface for viewing: append B-scan projection to enface array
+            if is_return_enface:
+                enface[:,c_len] = np.max(recon_buffer, axis=0)
+            # sanity check if processing size matches expected data size
             data_size += raw_buffer.size * raw_buffer.itemsize # counter increment of current recon-buffer size 
-        # Save to file in binary append mode
-        with open(full_file_path_recon, 'a+b') as f:
-            recon_buffer.tofile(f)
-    # sanity check for file size - mostly debug
-    if data_size is not int(dims_saving[0]*dims_saving[1]*dims_saving[2]):
-        print(f"[WARNING:] Saved {data_size} bytes to disk (expected {int(dims_saving[0]*dims_saving[1]*dims_saving[2])} bytes)")
+        # option to save current reconstructed buffer to disk (serialized, as one big *-BIN-file)
+        if is_save_2disk:
+            with open(full_file_path_recon, 'a+b') as f: # Save to file in binary append mode
+                recon_buffer.tofile(f)
+            # sanity check for file size - mostly debug
+            if data_size is not int(dims_saving[0]*dims_saving[1]*dims_saving[2]):
+                print(f"[WARNING:] Saved {data_size} bytes to disk (expected {int(dims_saving[0]*dims_saving[1]*dims_saving[2])} bytes)")
     # display processing time of entire volume
     print(f"Processing took {time.perf_counter()-t1}s")
+    # option to return middle B-scan and en face
     if is_return_enface:
-        return enface, middle_bSacan
-    return middle_bSacan
+        return middle_bScan, enface
+    # return enface map only
+    return middle_bScan
 
 def create_raw_enface(path: str, dims: tuple, b_scan_start_idx: int) -> None:
     """ @param: """
@@ -142,22 +165,29 @@ def create_raw_enface(path: str, dims: tuple, b_scan_start_idx: int) -> None:
             raw_buffer = np.reshape(raw_buffer, (dims[-1],dims[0]))
             raw_buffer = raw_buffer.swapaxes(0,1)
             # raw_buffer = np.roll(raw_buffer, 255, axis=1)
-            # if c_len % 2 == 0:
-            #     raw_buffer = np.roll(raw_buffer, raw_buffer.shape[1]//2, axis=1)
         enface.append(np.mean(raw_buffer, axis=0))
     return np.asarray(enface)
 
+
+def crop_brightest_aScans(data: np.array, crop_radius: int=1) :
+    """  """
+    ## TODO: Continue here
+    # sanity checks
+    assert data.ndims == 3, "Data cube is not properly reshaped"
+    # create vars and instances
+    REC = OctReconstructionManager()
+    cropped_scans = []
+    t1 = time.perf_counter()
+    print(f"[INFO:] Starting reconstruction of OCT volume...")
+    recon_cube = REC._run_reconstruction_from_json(data, 'DefaultReconParams')
+    print(f"Took {round(time.perf_counter(-t1), 1)} sec to reconstruct volume")
+    enface = np.max(recon_cube, axis=0)
+    max_col, max_row = np.amax()
+    return cropped_scans
+
 def run() -> None:
-    bScan_strt_idx = 0
-    enface, m_bScan = reconstruct_and_save_volume_2disk(r"D:\100kHz_RollOff", 
-                                                        "rasterVol01_13312x512x512_01.bin", 
-                                                        bScan_strt_idx=bScan_strt_idx)
-    # enface = create_raw_enface(r"D:\100kHz_RollOff\rasterVol01_13312x512x512_00.bin", (13312, 512, 512), 0)
-    print(np.where(enface == np.amax(enface)))
-    fig, ax = plt.subplots(1,2)
-    ax[0].imshow(enface)
-    ax[1].imshow(m_bScan)
-    plt.show()
+    pass
+
     
 # for testing and debugging purposes
 if __name__ == '__main__' :

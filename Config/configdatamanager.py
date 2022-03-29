@@ -40,7 +40,7 @@ class ConfigDataManager(RgbColorCodeManager) :
 
 # for testing and debugging purposes
 if __name__ == '__main__' :
-    print("[INFO:] Running from < gui_config_pasring.py > ...")
+    print("[INFO:] Running from     < gui_config_parsing.py >   ...")
     filename = 'config_gui_layout'
     GCONF = GuiConfigDataManager(filename).load_json_file()
     print(GCONF["testVar"])
