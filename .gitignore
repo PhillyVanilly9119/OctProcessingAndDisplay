@@ -43,6 +43,7 @@
 !__pychache__.
 **/Backend/__Pycache__/
 **/Frontend/__Pycache__/
+**/Config/
 
 # Data Files
 *.xls
