@@ -54,7 +54,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         assert l_pad >= 0, "Padding values must be positve integer values"
         return np.asarray( np.fft.fft( self.pad_buffer_along_axis(buffer, l_pad + buffer.shape[0]), axis=0 ), dtype=np.complex64 )
     
-    # ***** Post-Processing *****
+    # ***** Post-Processing ***** ---------------------------------------------
     def perform_post_fft_functions(self, 
                                    buffer: np.ndarray, 
                                    fac_scale: int, 
@@ -64,7 +64,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
                                    is_scale_data_for_disp: bool) -> np.ndarray:
         """ method that applies all neccessary post-FFT operations 
         >>> FFT has to be perfomed first (not iFFT(! due to values/dtype-conversions and log10) """
-        data = self.return_absolute( self.crop_fft_buffer(buffer) ) # already cropped compl.-conj.
+        data = self.return_abs_val_in_log_scale( self.crop_fft_buffer(buffer) ) # already cropped compl.-conj.
         data = self.perform_aScan_cropping( data, crop_lf_samples, crop_hf_samples )
         if is_scale_data_for_disp :
             return self.return_scaled( data, black_lvl=black_lvl, disp_scale=fac_scale ) 
@@ -107,6 +107,21 @@ class OctReconstructionManager(IO.OctDataFileManager) :
                                                crop_lf_samples=JSON['dc_crop_samples'], 
                                                crop_hf_samples=JSON['hf_crop_samples'], 
                                                is_scale_data_for_disp=JSON['is_scale_data_for_display'] )
+        
+    # -----------------------------------------------------------------------------------------------------
+    def _run_reconstruction_no_log_scale_from_json(self, buffer: np.ndarray, json_config_file_path: str) -> np.ndarray : 
+        """ same functionality as _run_reconstruction(), 
+        only that the reconstruction-parameters are parsed from JSON-congig-file """
+        # load config file
+        JSON = ConfigDataManager(filename=json_config_file_path).load_json_file()
+        # perform 3-step recon, using pre-fft-, fft-, and post-fft functions  
+        pre_ = self.perform_pre_fft_functions(buffer=buffer, 
+                                              coeffs=JSON['dispersion_coefficients'], 
+                                              key=JSON['windowing_key'], 
+                                              is_sub_bg=JSON['is_substract_background'])
+        post_ = self.perform_fft( pre_ )
+        post_ = self.return_abs_val_in_log_scale( post_ ) # already cropped compl.-conj.
+        return self.perform_aScan_cropping( post_, crop_lf_samples=JSON['dc_crop_samples'], crop_hf_samples=JSON['hf_crop_samples'] )
 
     ##########################################
     # ***** low-level processing methods *****
@@ -125,7 +140,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
     
     # subtract noise floor from scan -> TODO: Review - produces negative values...
     def calculate_background_sub(self, buffer: np.ndarray, background: np.ndarray=None) -> np.ndarray :
-        """ Returns denoised OCT buffer (corresponding to sampling) """
+        """ returns denoised OCT buffer (corresponding to sampling) """
         if background is None :  
                 background = self.calculate_nDim_independant_ascan_avg( buffer )
         return np.asarray( np.subtract( *self.adjust_dim_for_processing(buffer, background) ), dtype=self.dtype_raw )
@@ -154,7 +169,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         
     # returns a windowing function to convolute raw OCT data with
     def create_windowing_function(self, a_len: int, key='hann', sigma: int=None, is_show_info_prints: bool=False) -> np.ndarray :
-        """ Creates a real-valued (float64) vector for i.e. spectrally shaping an A-scan """
+        """ creates a real-valued (float64) vector for i.e. spectrally shaping an A-scan """
         if sigma is None:
             sigma = a_len//10
         if key.lower() == 'hann' :
@@ -199,10 +214,14 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         return np.asarray( buffer[:buffer.shape[0]//2] )
     
     #### post-FFT methods ####
-    def return_absolute(self, buffer: np.ndarray) -> np.ndarray :
+    def return_abs_val_in_log_scale(self, buffer: np.ndarray) -> np.ndarray :
         """ returns absoulte values of a complex OCT data buffer 
         !! CAUTION!! Since we use FFT and NOT iFFT (for log10 to work) return type is a float """
         return np.asarray( 20 * np.log10( np.abs(buffer) ), dtype=np.float )
+    
+    def return_abs_val(self, buffer: np.ndarray) -> np.ndarray :
+        """ post-FFT function: returns absoulte values of a complex OCT data buffer """
+        return np.asarray( np.abs(buffer ), dtype=np.float )
     
     def return_scaled(self, buffer: np.ndarray, black_lvl: int=77, disp_scale: int=66) -> np.ndarray :
         """ returns scaled version of OCT data buffer """
