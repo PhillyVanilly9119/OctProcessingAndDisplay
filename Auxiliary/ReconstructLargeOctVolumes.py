@@ -77,7 +77,7 @@ def reconstruct_and_save_volume_2disk(file_path: str, file_name_raw: str, file_n
     # create file to save to
     full_file_path_recon = os.path.join(file_path, parse_prefixes_file_dims(file_name_recon) + str(dims_saving[0]) + 'x' + str(dims_saving[1]) + 'x' + str(dims_saving[2]) + '.bin')
     # returns tuple with middle B-scan and en face OR just enface, depending on flag "is_return_enface" 
-    recon_data = process_buffer_wise(REC, JSON, 
+    recon_data = process_buffer_wise(REC, file_name_json_recon_params, 
                                      dims, dims_saving, 
                                      full_file_path_raw, full_file_path_recon, 
                                      is_return_enface=is_return_enface, 
@@ -87,7 +87,7 @@ def reconstruct_and_save_volume_2disk(file_path: str, file_name_raw: str, file_n
                                      max_idxs=max_idxs)
     return recon_data
 
-def process_buffer_wise(REC, JSON, dims, dims_saving, full_file_path_raw, full_file_path_recon, 
+def process_buffer_wise(REC, json_file_name, dims, dims_saving, full_file_path_raw, full_file_path_recon, 
                         b_scan_start_idx: int=0, is_save_2disk: bool=False, is_save_brightest_aScan: bool=False,
                         max_idxs: tuple=None, is_return_enface=True) -> None:
     """ @param: """
@@ -109,18 +109,12 @@ def process_buffer_wise(REC, JSON, dims, dims_saving, full_file_path_raw, full_f
             raw_buffer = np.fromfile(full_file_path_raw, count=count, offset=offset, dtype='<u2')
             raw_buffer = np.reshape(raw_buffer, (dims[1],dims[0]))
             raw_buffer = raw_buffer.swapaxes(0,1)
-            raw_buffer = np.roll(raw_buffer, 255, axis=1)
+            raw_buffer = np.roll(raw_buffer, (dims[1]//2)-1, axis=1)
             if c_len % 2 == 0:
                 raw_buffer = np.roll(raw_buffer, raw_buffer.shape[1]//2, axis=1)
             # print(f"{c_len} Size of raw buffer {raw_buffer.size} bytes in {raw_buffer.dtype}")
-            recon_buffer = REC._run_reconstruction(buffer = raw_buffer,
-                                                   disp_coeffs = JSON['dispersion_coefficients'], 
-                                                   wind_key = JSON['windowing_key'],
-                                                   samples_hf_crop = JSON['hf_crop_samples'], 
-                                                   samples_dc_crop = JSON['dc_crop_samples'],
-                                                   blck_lvl = JSON['black_lvl_for_dis'], 
-                                                   scale_fac = JSON['disp_scale_factor']
-                                                   )
+            recon_buffer = REC._run_reconstruction_from_json(buffer=raw_buffer,
+                                                             json_config_file_path=json_file_name)
             # option to save max-index scans to disk - needs max_idxs as tuple with pos. of brightest A-scans
             if is_save_brightest_aScan:
                 assert len(max_idxs) == 2
@@ -140,9 +134,9 @@ def process_buffer_wise(REC, JSON, dims, dims_saving, full_file_path_raw, full_f
         if is_save_2disk:
             with open(full_file_path_recon, 'a+b') as f: # Save to file in binary append mode
                 recon_buffer.tofile(f)
-            # sanity check for file size - mostly debug
-            if data_size is not int(dims_saving[0]*dims_saving[1]*dims_saving[2]):
-                print(f"[WARNING:] Saved {data_size} bytes to disk (expected {int(dims_saving[0]*dims_saving[1]*dims_saving[2])} bytes)")
+            # # sanity check for file size - mostly debug
+            if int(recon_buffer.size) != int(dims_saving[0]*dims_saving[1]):
+                print(f"[WARNING:] Saved {recon_buffer.size} bytes to disk (expected {int(dims_saving[0]*dims_saving[1])} bytes)")
     # display processing time of entire volume
     print(f"Processing took {time.perf_counter()-t1}s")
     # option to return middle B-scan and en face
@@ -192,4 +186,9 @@ def run() -> None:
 # for testing and debugging purposes
 if __name__ == '__main__' :
     print("[INFO:] Running from     < reconstructlargeoctvolumes.py >     ...")
-    run()
+    # run()
+    file_path = r"D:\08042022_WetLabs\Eye3"
+    file_name = "rasterVol03_3_13312x400x400.bin"
+    bScan, enface = reconstruct_and_save_volume_2disk(file_path, file_name, is_save_2disk=True)
+    plt.imshow(bScan)
+    plt.show()

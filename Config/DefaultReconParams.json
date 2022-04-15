@@ -2,8 +2,8 @@
     "windowing_key": "Hann",
 
     "dispersion_coefficients": [
-        -15,
-        20,
+        5,
+        -21,
         0,
         0
     ],

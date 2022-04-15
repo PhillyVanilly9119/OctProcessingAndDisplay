@@ -55,21 +55,15 @@ def process_test_buffer(manual_json_selection: bool) -> tuple:
 def load_and_recon_file_from_json_params(path: str, manual_json_selection: bool) -> np.ndarray:
     Rec = OctReconstructionManager()
     raw_data = Rec.reshape_oct_volume(Rec.load_bin_file(path), Rec.get_oct_volume_dims(path)[0])
-    # load recon params
-    if manual_json_selection:
-        with open(Rec._tk_file_selection()) as f:
-            config = json.load(f)
-    else:
-        with open(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'Config', 'Config_Reconstruction_Params.json'))) as f:
-            config = json.load(f)
+    # # load recon params
+    # if manual_json_selection:
+    #     with open(Rec._tk_file_selection()) as f:
+    #         config = json.load(f)
+    # else:
+    #     with open(os.path.abspath()) as f:
+    #         config = json.load(f)
     # reconstruct buffer
-    recon_data = Rec._run_reconstruction(raw_data,
-                                         tuple(config["dispersion_coefficients"]),
-                                         config["windowing_key"],
-                                         config["hf_crop_samples"],
-                                         config["dc_crop_samples"],
-                                         config["disp_scale_range"],
-                                         config["black_lvl_for_dis"])
+    recon_data = Rec._run_reconstruction_from_json(raw_data, os.path.join(os.path.dirname( __file__ ), '..', 'Config', 'DefaultReconParams'))
     return recon_data
 
 def reconstruct_and_save_all_buffers_in_folder(path: str, manual_json_selection: bool) -> None:
