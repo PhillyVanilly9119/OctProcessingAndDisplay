@@ -187,8 +187,13 @@ def run() -> None:
 if __name__ == '__main__' :
     print("[INFO:] Running from     < reconstructlargeoctvolumes.py >     ...")
     # run()
-    file_path = r"D:\08042022_WetLabs\Eye3"
-    file_name = "rasterVol03_3_13312x400x400.bin"
-    bScan, enface = reconstruct_and_save_volume_2disk(file_path, file_name, is_save_2disk=True)
-    plt.imshow(bScan)
-    plt.show()
+    file_path = r"E:\HunnidKhz"
+    file_names = glob(file_path + "/*.bin")
+    print(file_names)
+    for file_name in file_names:
+        file_name = file_name.split('\\')[-1]
+        bScan, enface = reconstruct_and_save_volume_2disk(file_path, file_name, is_save_2disk=True)
+        # plt.imshow(enface)
+        # plt.show()
+        # plt.imshow(cv2.resize(bScan, (1000,2000)))
+        # plt.show()

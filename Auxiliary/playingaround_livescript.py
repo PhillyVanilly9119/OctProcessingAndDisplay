@@ -137,4 +137,71 @@ f_out = interp1d(heights, t_in, axis=1)
 nheight_out = 50
 new_heights = np.linspace(0, 1, nheight_out)
 t_out = f_out(new_heights)
+
+
+# %%
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+a = 13312
+b = 512
+c = 512
+
+main_path = "D:\\100kHz_RollOff"
+file_path = "rasterVol01_13312x512x512_00.bin"
+full_file_path = os.path.join(main_path, file_path)
+print(full_file_path, os.path.isfile(full_file_path))
+
+volume = np.fromfile(full_file_path, dtype='<u2')
+print(volume.shape, volume.size)
+volume = np.reshape(volume, (b, volume.size//b//c, c))
+print(volume.shape, volume.size, a*b*c)
+plt.imshow(volume[:,:,c//2])
+plt.show()
+
+# %%
+## 03.06.2022 - reconstruction and visualization of axial resolution measurements
+## C: @P.Matten
+import os
+import sys
+import numpy as np
+import matplotlib.pyplot as plt
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'BackEnd')))
+
+from octreconstructionmanager import OctReconstructionManager
+
+path_signal = r"C:\Users\PhilippsLabLaptop\Desktop\RollOff\100kHz\exported_buffer_No.0_13312x1024.bin"
+path_background = r"C:\Users\PhilippsLabLaptop\Desktop\RollOff\100kHz\exported_buffer_No.10_13312x1024.bin" 
+
+b_signal = np.fromfile(path_signal, dtype=np.uint16)
+b_background = np.fromfile(path_background, dtype=np.uint16)
+
+b_signal = np.swapaxes(np.reshape(b_signal, (1024, 13312)), 0, 1)
+b_background = np.swapaxes(np.reshape(b_background, (1024, 13312)), 0, 1)
+print(b_signal.shape, b_background.shape)
+
+b_signal_avg = np.mean(b_signal[:,:50], axis=-1)
+b_background_avg = np.mean(b_background[:,:50], axis=-1)
+
+REC = OctReconstructionManager()
+rec_ = REC._run_reconstruction_from_json(np.array(b_signal, dtype=np.float32), 'DefaultReconParams')//4
+rec_avg_ = REC._run_reconstruction_from_json(np.array(b_signal_avg-b_background_avg, dtype=np.float32), 'DefaultReconParams')//4
+
+print(rec_.shape)
+plt.figure(figsize=(15,15))
+plt.plot(rec_[:2000,0])
+plt.plot(rec_avg_[:2000])
+
+def find_nearest(array, value) -> tuple:
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return array[idx], idx
+
+_, peak = find_nearest(rec_avg_, np.max(rec_avg_))
+_, half_fwhm = find_nearest(rec_avg_, np.max(rec_avg_)-3)
+fwhm = 2*np.abs(half_fwhm-peak)
+print(f"peak position: {peak}, left most -3dB position: {half_fwhm}, results in FWHM: {fwhm}[pxls]")
+
 # %%

@@ -121,7 +121,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
                                               is_sub_bg=JSON['is_substract_background'])
         post_ = self.perform_fft( pre_ )
         post_ = self.return_abs_val_in_log_scale( post_ ) # already cropped compl.-conj.
-        return self.perform_aScan_cropping( post_, crop_lf_samples=JSON['dc_crop_samples'], crop_hf_samples=JSON['hf_crop_samples'] )
+        return self.perform_aScan_cropping( post_, lf_smpls_crop=JSON['dc_crop_samples'], hf_smpls_crop=JSON['hf_crop_samples'] )
 
     ##########################################
     # ***** low-level processing methods *****

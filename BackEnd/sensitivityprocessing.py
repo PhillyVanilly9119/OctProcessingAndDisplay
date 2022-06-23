@@ -247,7 +247,7 @@ def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Downloa
     # reconstruct A-scans
     REC = OctReconstructionManager()
     subbed_recon_sig = REC._run_reconstruction_from_json(subbed_mean_sig, 'DefaultReconParams')
-    recon_sig = REC._run_reconstruction(mean_sig, 'DefaultReconParams')
+    recon_sig = REC._run_reconstruction_from_json(mean_sig, 'DefaultReconParams')
     
     def find_nearest(array, value) -> tuple:
         array = np.asarray(array)
@@ -286,32 +286,20 @@ def plot_ascan_and_background(sig_path: str=r"C:\Users\PhilippsLabLaptop\Downloa
     # zoom-in on rconstructed signal
     ax[1,1].plot(recon_sig[:recon_sig.shape[0]//10], label=f"Reconstructed Averaged A-scan\n({JSON['dispersion_coefficients']}) and a FWHM of\n{round(fwhm*pixel_pitch, 2)}µm [{fwhm}pxls] (air -> n=1)\n({round(fwhm*pixel_pitch/1.36, 2)}µm (tissue -> n=1.36)")  
     ax[1,1].plot(subbed_recon_sig[:1500], label=f"Reconstructed Averaged & BG-subbed A-scan\n({JSON['dispersion_coefficients']}) and a FWHM of\n{round(fwhm*pixel_pitch, 2)}µm [{fwhm}pxls] (air -> n=1)\n({round(fwhm*pixel_pitch/1.36, 2)}µm (tissue -> n=1.36)")
-    ax[1,1].legend(loc='upper right')
+    ax[1,1].legend(loc='upper left')
     ax[1,1].set_title("Zoom-in on Reconstructed Averged A-scans with Axial Resolution")
     # show all subplots
     plt.show()
       
 
 def run() -> None:
-    """  """
+    """ main function if script is executed by interpreter """
     print("[Info:] Running from    < sensitivityprocessing.py >    ... ")
-    path = r"/home/zeiss/Data_Tachyoptes/RasterScanData/RollOff100_2"
-    files = glob.glob(path + '/*bin')
-    for file in files:
-        REC = OctReconstructionManager()
-        dims, _ = REC.get_oct_volume_dims(file)
-        data = np.fromfile(file, dtype='<u2')
-        print(file)
-        data = np.reshape(data, (dims[-1], dims[1], dims[0]))
-        data = np.rollaxis(data, -1)
-        print(data.shape)
-        img_name = file.split('.bin')[0] + '_project.png'
-        cropped_scans = plot_enfaces(data, (0,0), img_name=img_name, 
-                                     is_save_img=True, is_save_data=False)
+    plot_ascan_and_background(sig_path=r"\\samba\p_Zeiss\Publications\Journal Publications\4D OCT Engine\AuxiliaryData\AxialResolution\Signal",
+                              bg_path=r"\\samba\p_Zeiss\Publications\Journal Publications\4D OCT Engine\AuxiliaryData\AxialResolution\Background")
+    # data = load_detector_signals(r"\\samba\p_Zeiss\Publications\Journal Publications\4D OCT Engine\AuxiliaryData\AxialResolution\ref")
+    # plot_all_recon_data(data, (0,0))
 
 if __name__ == '__main__':
     run()
-    # path = r"/home/zeiss/Data_Tachyoptes/RasterScanData/100kHzAscans"
-    # raw_scans = load_uncropped_aScans(path, (13312, 4))
-    # raw_scans = np.swapaxes(raw_scans, 0, 1)
-    # recon_data = plot_all_recon_data(raw_scans, (0,0))
+ 
