@@ -340,8 +340,11 @@ class UiWindowDialog(object):
         if path is None:
             print("No file has been chosen - returning...")
             return
+        print("[INFO:] Loading data from file... ")
         data = np.fromfile(path, count=bScan_size, offset=bScan_size*self.bScanIndex, dtype='<u2')
+        print(data.shape, self.bScanHeight, self.bScanWidth)
         self.data = np.swapaxes(np.reshape(data, (self.bScanHeight, self.bScanWidth)), 0, 1)
+        print("[INFO:] Done loading data from file!")
         if self.data is not None:
             self.flag_loaded_oct_data = True
         self.spinBox_bScanWidth.setEnabled(False)
