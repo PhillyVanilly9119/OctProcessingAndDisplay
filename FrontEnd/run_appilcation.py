@@ -311,7 +311,7 @@ class UiWindowDialog(object) :
         font.setBold(True)
         font.setWeight(75)
         self.spinBox_aScanLength.setEnabled(False)
-        self.spinBox_aScanLength.setRange(0, 4096)
+        self.spinBox_aScanLength.setRange(0, 2**14)
         self.spinBox_aScanLength.setObjectName("_spinBox_aScanLength")
         self.spinBox_aScanLength.setStyleSheet("color: rgb(17, 29, 78);"
                                                "background: rgb(181, 220, 241 )")

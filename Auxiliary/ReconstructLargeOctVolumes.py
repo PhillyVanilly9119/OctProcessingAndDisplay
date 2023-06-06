@@ -100,7 +100,7 @@ def process_buffer_wise(REC, json_file_name, dims, dims_saving, full_file_path_r
     print("Starting timer for processing...")
     print(f"[INFO:] Expected dimensions of one buffer/B-scan are {dims} (with {b_scan_raw_in_bytes} bytes)\nReturning a cropped, reconstructed B-scan with dims {dims_saving} (with {dims_saving[0]*dims_saving[1]} bytes)")
     # ----------- Loop through data (B-scan-wise), reconstruct and save to file ------------
-    for c_len in range(dims[-1]):
+    for c_len in tqdm(range(dims[-1])):
         # open raw file, move pointer to current B-scan and reconstruct
         with open(full_file_path_raw, 'rb') as f_raw:
             count = b_scan_raw_in_bytes # file size in bytes
@@ -133,7 +133,7 @@ def process_buffer_wise(REC, json_file_name, dims, dims_saving, full_file_path_r
         # option to save current reconstructed buffer to disk (serialized, as one big *-BIN-file)
         if is_save_2disk:
             with open(full_file_path_recon, 'a+b') as f: # Save to file in binary append mode
-                recon_buffer.tofile(f)
+                recon_buffer.astype(np.uint8).tofile(f)
             # # sanity check for file size - mostly debug
             if int(recon_buffer.size) != int(dims_saving[0]*dims_saving[1]):
                 print(f"[WARNING:] Saved {recon_buffer.size} bytes to disk (expected {int(dims_saving[0]*dims_saving[1])} bytes)")
@@ -187,12 +187,12 @@ def run() -> None:
 if __name__ == '__main__' :
     print("[INFO:] Running from     < reconstructlargeoctvolumes.py >     ...")
     # run()
-    file_path = r"D:\100kHz_RollOff"
-    file_names = glob(file_path + "/*.bin")
+    file_path = "/media/zeiss/Data/data_AttenuationTestEye_050623"
+    file_names = glob(os.path.join(file_path, "*.bin"))
     print(file_names)
-    for file_name in tqdm(file_names):
+    for file_name in file_names:
         print(file_name)
-        file_name = file_name.split('\\')[-1]
+        file_name = os.path.split(file_name)[-1]
         bScan, enface = reconstruct_and_save_volume_2disk(file_path, file_name, is_save_2disk=True)
         # plt.imshow(enface)
         # plt.show()
