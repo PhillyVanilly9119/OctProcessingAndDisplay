@@ -370,7 +370,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
                                                                   json_config_file_path=json_file_name) # reconstruct
                 if is_save_volume_2disk: # save-/append reconstructed buffer, if flag is True
                     with open(full_file_path_recon, 'a+b') as f: # Save to file in binary append mode
-                        recon_buffer.tofile(f)
+                        recon_buffer.astype(np.uint8).tofile(f)
                 out_vol[:, :, c] = recon_buffer # write current buffer in out volume buffer 
         return np.asarray(out_vol, dtype=np.uint8)
     
@@ -379,8 +379,11 @@ class OctReconstructionManager(IO.OctDataFileManager) :
 if __name__ == '__main__' :
     print("[INFO:] Running from < octreconstructionmanager.py > ...")
 
-    path = r"E:\HunnidKhz\rasterVol05_13312x200x200.bin"
-    recon = OctReconstructionManager().process_large_volumes((13312,200,200), 'DefaultReconParams', path, bScan_start_idx=7)
+    
+    path = r"/home/zeiss/Data_Tachyoptes/rasterVol04_13312x512x512.bin"
+    recon = OctReconstructionManager().process_large_volumes((13312,512,512), 'DefaultReconParams', path, is_save_volume_2disk=True)
     
     plt.imshow(np.mean(recon, axis=0), cmap='gray')
     plt.show()
+
+
