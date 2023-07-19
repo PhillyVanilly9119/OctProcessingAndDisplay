@@ -16,7 +16,6 @@ import numpy as np
 from tqdm import tqdm
 from scipy import signal
 import matplotlib.pyplot as plt
-# import cv2 # debug
 
 # custom imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'Config')))
