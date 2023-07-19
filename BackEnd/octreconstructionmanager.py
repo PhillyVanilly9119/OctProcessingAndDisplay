@@ -356,12 +356,10 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         if full_file_path_recon is None:
             full_file_path_recon = full_file_path_raw.split('.bin')[0] + '_recon.bin'
         out_vol = np.zeros((aLen_rec, bLen, cLen))
-        # loop though volume and reconstruct BUFFER-WISE
+        # loop though volume and reconstruct (optional: and safe) BUFFER-WISE
         for c in tqdm(range(cLen)):
             with open(full_file_path_raw, 'rb') as f_raw:
-                offset = ((c + bScan_start_idx) % cLen) * raw_bScan_file_size * np.dtype(self.dtype_loading).itemsize # offset in bytes(!!!!)
-                # print('\n', f"Current interation={c, offset//(aLen_raw*bLen*np.dtype(self.dtype_loading).itemsize)}, \
-                #     with A*B elements in current buffer={raw_bScan_file_size} and the current file pointer offset: {offset}") # debug
+                offset = ((c + bScan_start_idx) % cLen) * raw_bScan_file_size * np.dtype(self.dtype_loading).itemsize # offset in bytes
                 raw_buffer = np.fromfile(f_raw, dtype=self.dtype_raw, count=raw_bScan_file_size, offset=offset) # load buffer
                 raw_buffer = np.reshape(raw_buffer, (bLen, aLen_raw)) # reshape to size A * B
                 raw_buffer = raw_buffer.swapaxes(0,1) # swap axis (A is 0th axis, by convention)
@@ -369,20 +367,17 @@ class OctReconstructionManager(IO.OctDataFileManager) :
                                                                   json_config_file_path=json_file_name) # reconstruct
                 if is_save_volume_2disk: # save-/append reconstructed buffer, if flag is True
                     with open(full_file_path_recon, 'a+b') as f: # Save to file in binary append mode
-                        recon_buffer.astype(np.uint8).tofile(f)
+                        recon_buffer.astype(self.dtype_recon).tofile(f)
                 out_vol[:, :, c] = recon_buffer # write current buffer in out volume buffer 
-        return np.asarray(out_vol, dtype=np.uint8)
+        return np.asarray(out_vol, dtype=self.dtype_recon)
     
 
 # for testing and debugging purposes
 if __name__ == '__main__' :
     print("[INFO:] Running from < octreconstructionmanager.py > ...")
 
+    # path = r"/home/zeiss/Data_Tachyoptes/rasterVol04_13312x512x512.bin"
+    # recon = OctReconstructionManager().process_large_volumes((13312,512,512), 'DefaultReconParams', path, is_save_volume_2disk=True)
     
-    path = r"/home/zeiss/Data_Tachyoptes/rasterVol04_13312x512x512.bin"
-    recon = OctReconstructionManager().process_large_volumes((13312,512,512), 'DefaultReconParams', path, is_save_volume_2disk=True)
-    
-    plt.imshow(np.mean(recon, axis=0), cmap='gray')
-    plt.show()
-
-
+    # plt.imshow(np.mean(recon, axis=0), cmap='gray')
+    # plt.show()
