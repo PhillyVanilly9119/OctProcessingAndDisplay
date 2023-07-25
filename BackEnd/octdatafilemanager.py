@@ -148,19 +148,29 @@ class OctDataFileManager() :
                     img_buffer.append(c_img)
         return np.asarray(img_buffer, dtype=dtype_loading) 
                     
-    @staticmethod
-    def reshape_oct_volume(buffer: np.array, dims: tuple) -> np.array :
-        """ Returns reshaped volume buffer/np-array acc. to self.dims-shape """
-        if len(dims) == 1 :
-            dims = dims[0]
-        elif len(dims) == 2 :
-            dims = (dims[1], dims[0])
-        elif len(dims) == 3 :
-            dims = (dims[2], dims[1], dims[0])
-        return np.asarray( np.swapaxes(np.reshape(buffer, dims), 0, -1) )
+    
+#---------------------------------------------------------
+### General static methods related to volume reshaping ###
+#---------------------------------------------------------
+def __return_volume_dims_string(t: tuple) -> str:
+    if not isinstance(t, tuple):
+        raise ValueError("Input must be a tuple.")
+    filename_unfiltered = "x".join(str(elem) for elem in t)
+    return "_" + filename_unfiltered + "_"
               
+# not tested
+def reshape_oct_volume(buffer: np.array, dims: tuple) -> np.array :
+    """ Returns reshaped volume buffer/np-array acc. to self.dims-shape """
+    if len(dims) == 1 :
+        dims = dims[0]
+    elif len(dims) == 2 :
+        dims = (dims[1], dims[0])
+    elif len(dims) == 3 :
+        dims = (dims[2], dims[1], dims[0])
+    return np.asarray( np.swapaxes(np.reshape(buffer, dims), 0, -1) )
+   
                     
-# for testing and debugging purposes
+
 if __name__ == '__main__' :
     print("[INFO:] Running from < data_io.py > ...")
-    IO = OctDataFileManager()  
+    # IO = OctDataFileManager()  

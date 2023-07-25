@@ -55,10 +55,10 @@ class OctReconstructionManager(IO.OctDataFileManager) :
             l_pad (int): number of zeros to be added along A-scan. Defaults to None.
 
         Returns:
-            np.ndarray: _description_
+            np.ndarray: complex-valued FFT buffer of the OCT volume/buffer
         """
         # TODO: check if it can be optimized, so that the FFT length of an A-scan is always powers of 2
-        if l_pad == 0 :
+        if l_pad == None :
             l_pad = buffer.shape[0]
         elif l_pad == 1:
             l_pad = OctReconstructionManager.diff_to_next_power_of_2(buffer.shape[0])
@@ -298,16 +298,32 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         return np.asarray( buffer[lf_smpls_crop:buffer.shape[0]-hf_smpls_crop] )
         
     #### Auxiliary functions ####
-    def drop_every_nth_aScan(self, data: np.ndarray, n_drop: int) -> np.ndarray :
-        """ reduces the A-scan sampling, via dropping out every n-th sample
-        ATTENTION: method asserts that first dimension of array is A-scan-dimension
-        NOTE: this happens at a loss of axial resolution in the x-space (reconstructed scan) """
+    def drop_every_nth_aScan(self, data: np.ndarray, n_drop: int=2) -> np.ndarray :
+        """Reduces the A-scan sampling, via dropping out every n-th sample
+        NOTE: method asserts that first dimension of array is A-scan-dimension
+        NOTE: this happens at a loss of axial resolution in the x-space (reconstructed scan)
+        
+        Args:
+            data (np.ndarray): inpurt OCT buffer/volume at full axial sampling
+            n_drop (int, optional): number of samples to be dropped, i.e. 3 := every thrid sample. Defaults to 2.
+
+        Returns:
+            np.ndarray: returns sub-sampled array
+        """
         return np.asarray( data[::n_drop], dtype=data.dtype )
     
     # TODO: test the following functions
-    def apply_spectral_splitting(self, buffer: np.ndarray, split_factor: int) : # WORKS only with B-scans / buffers
-        """ Reshapes B-Scan-like data buffer according to spectral splitting requirements """
+    def apply_spectral_splitting(self, buffer: np.ndarray, split_factor: int) -> np.array: 
+        """Reshapes B-Scan-like data buffer according to spectral splitting requirements
         # TODO: rework for general use case, aka for OCT volume data not just B-scans/buffer
+        WORKS only with B-scans / buffers, not on A-scans
+        Args:
+            buffer (np.ndarray): input OCT buffer/volume
+            split_factor (int): factor by which the spectrum is sub-divided
+
+        Returns:
+            np.array: returns reshaped buffer/volume
+        """
         return np.asarray( np.reshape( buffer, (buffer.shape[0] // split_factor, 
                                                split_factor * buffer.shape[1]) ) )
         

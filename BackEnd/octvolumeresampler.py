@@ -36,7 +36,7 @@ class OctVolumeResmapler():
         to crop (!!!) the reshaped volume, i.e. crops in voxels corresponding to output size and shape
 
         Args:
-            scaling (tuple): 3-valued tuple, scaling as factors relative to input dimension (1,1,1)
+            scaling (tuple): 3-valued tuple, scaling as factors relative to input dimensional sizes (1,1,1)
             is_crop (bool): flag as to wether or not to crop the output volume
             crop (tuple): cropping values in voxels (z_min, z_max, x_min, x_max, y_min, y_max) 
             in output volume voxel sizes
