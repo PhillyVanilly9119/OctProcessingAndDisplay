@@ -5,7 +5,7 @@ import os
 import glob
 import imageio
 import numpy as np
-# import matplotlib.pyplot as plt # debug
+import matplotlib.pyplot as plt # debug
 from PIL import Image
 from tqdm import tqdm
 from natsort import natsorted
@@ -28,26 +28,35 @@ def generate_volumes(path_loading: str, path_saving: str):
     vol_counter = 0
     for i, val in tqdm(enumerate(sorted_full_file_list)):
         c_idx = i % dims[-1] # c-scan index to avoid indexing errors
+        if os.path.getsize(val) < 4:
+            continue
         im = np.swapaxes(np.asarray(imageio.imread(val), dtype=np.uint8), 0, 1) # load image
         vol_buffer[:,:,c_idx] = im # write current B-scan in volume
         if c_idx == dims[-1] - 1: # enters, every time one entire volume full
             # save volume as binary
-            print(f"\n[INFO:] Saving volume No.{vol_counter}\n")
+            # print(f"\n[INFO:] Saving volume No.{vol_counter}\n") #debug
             vol_time_stamp = os.path.basename(path_saving)
             file_name = "OctVolume_" + str(vol_counter) + "_" + vol_time_stamp + "_" + str(dims[0]) + "x" + str(dims[1]) + "x" + str(dims[-1]) + ".bin"
             vol_buffer.tofile(os.path.join(path_saving, file_name))
             # save en face image as png
             enface = np.mean(vol_buffer, axis=0)
-            enface = (enface // enface.max() * 255).astype(np.uint8)
-            imageio.imwrite(os.path.join(path_saving, file_name.split('.bin')[0] + ".png"), enface)
+            enface = enface * 255 / np.max(enface) # map input to uint8 dynamic range
+            imageio.imwrite(os.path.join(path_saving, file_name.split('.bin')[0] + ".png"), np.uint8(enface))
             vol_counter += 1    
 
 
 def run():
-
-    path_loading = glob.glob(r"C:\Users\phili\Desktop\Rasters\20230120_100514" + "/*")
-    path_saving = [f + "_binaries" for f in path_loading]
-
+    
+    # path = r"C:\Users\PhilippsLabLaptop\Desktop\VolumeSeries"
+    # path_loading = glob.glob(path + "/*")
+    # path_saving = [path + "_binaries" for path in path_loading]
+    
+    path_loading = [
+        r"C:\Users\phili\Desktop\PhillyScripts\20230411_135910_Slammer1"
+        ]
+    
+    path_saving = [i + '_binaries' for i in path_loading]
+    
     for i, _ in enumerate(path_loading):
         generate_volumes(path_loading[i], path_saving[i])
 
