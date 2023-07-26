@@ -262,7 +262,16 @@ class OctReconstructionManager(IO.OctDataFileManager) :
     
     #### FFT methods ####
     def pad_buffer_along_axis(self, buffer: np.ndarray, target_length: int, axis: int = 0) -> np.ndarray :
-        """ pads zeros along a certain axis (default along A-scan axis) and returns padded array """
+        """pads zeros along a certain axis (default along A-scan axis) and returns padded array
+
+        Args:
+            buffer (np.ndarray): input OCT buffer (ideally pre-processed w/ spectral shaping etc.)
+            target_length (int): input length for FFT
+            axis (int, optional): axis, along which the buffer is supposed to be padded (!!! must be A-scan direction !!!). Defaults to 0.
+
+        Returns:
+            np.ndarray: padded OCT buffer, ready for FFT
+        """
         pad_size = target_length - buffer.shape[axis]
         if pad_size <= 0:
             return buffer
@@ -271,13 +280,29 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         return np.asarray( np.pad(buffer, pad_width=npad, mode='constant', constant_values=0) )
     
     def crop_fft_buffer(self, buffer: np.ndarray) -> np.ndarray :
-        """ returns only first half of A-scan samples of complex buffer """
+        """returns only first half of A-scan samples of complex buffer
+
+        Args:
+            buffer (np.ndarray): output buffer straight after the FFT
+
+        Returns:
+            np.ndarray: croped half, or one of the "Fourier-planes"
+        """
         return np.asarray( buffer[:buffer.shape[0]//2] )
     
-    #### post-FFT methods ####
+    #------------------------------------------------------------------------------------------
+    ####                               post-FFT methods                                    ####
+    #------------------------------------------------------------------------------------------
     def return_abs_val_in_log_scale(self, buffer: np.ndarray) -> np.ndarray :
-        """ returns absoulte values of a complex OCT data buffer 
-        !! CAUTION!! Since we use FFT and NOT iFFT (for log10 to work) return type is a float """
+        """returns absoulte values of a complex OCT data buffer 
+        !! CAUTION!! Since we use FFT and NOT iFFT (for log10 to work) return type is a float
+
+        Args:
+            buffer (np.ndarray): input buffer ((cropped) FFT output)
+
+        Returns:
+            np.ndarray: log scaled absolute value of the 
+        """
         return np.asarray( 20 * np.log10( np.abs(buffer) ), dtype=np.float64 )
     
     def return_abs_val(self, buffer: np.ndarray) -> np.ndarray :
