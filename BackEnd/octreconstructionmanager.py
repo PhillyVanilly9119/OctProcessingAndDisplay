@@ -66,22 +66,18 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         return np.asarray( np.fft.fft( self.pad_buffer_along_axis(buffer, l_pad + buffer.shape[0]), axis=0 ), dtype=np.complex64 )
     
     # ***** Post-Processing ***** ---------------------------------------------
-    def perform_post_fft_functions(self, buffer: np.ndarray, fac_scale: int, black_lvl: int, 
-                                   crop_lf_samples: int, crop_hf_samples: int, is_scale_data_for_disp: bool) -> np.ndarray:
+    def perform_post_fft_functions(self, buffer: np.ndarray, fac_scale: int, black_lvl: int, is_scale_data_for_disp: bool) -> np.ndarray:
         """applies all neccessary post-FFT operations 
         >>> FFT has to be perfomed first (not iFFT(! due to values/dtype-conversions and log10)
         Args:
             buffer (np.ndarray): OCT data 
             fac_scale (int): scaling factor to scale in uint8 value-space
             black_lvl (int): constant to be substrated from signal
-            crop_lf_samples (int): DC samples to be cropped out of the signal
-            crop_hf_samples (int): high frequency samples to be cropped out of the signal
             is_scale_data_for_disp (bool): flag to deterine wether of not the data should be scaled to uint8 value space
         Returns:
             np.ndarray: final reconstructed OCT signal
         """
         data = self.return_abs_val_in_log_scale( self.crop_fft_buffer(buffer) ) # already cropped compl.-conj.
-        data = self.perform_aScan_cropping( data, crop_lf_samples, crop_hf_samples )
         if is_scale_data_for_disp :
             return self.return_scaled( data, black_lvl=black_lvl, disp_scale=fac_scale ) 
         return data
@@ -107,8 +103,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         """
         pre_ = self.perform_pre_fft_functions( buffer, disp_coeffs, wind_key, is_bg_sub)
         post_ = self.perform_fft( pre_ )
-        return self.perform_post_fft_functions( post_, scale_fac, blck_lvl,
-                                               samples_dc_crop, samples_hf_crop, show_scaled_data )
+        return self.perform_post_fft_functions( post_, scale_fac, blck_lvl, show_scaled_data )
 
     # -----------------------------------------------------------------------------------------------------
     def _run_reconstruction_from_json(self, buffer: np.ndarray, json_config_file_path: str) -> np.ndarray : 
@@ -129,12 +124,9 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         return self.perform_post_fft_functions( buffer=post_, 
                                                 fac_scale=JSON['disp_scale_factor'], 
                                                 black_lvl=JSON['black_lvl_for_dis'], 
-                                                crop_lf_samples=JSON['dc_crop_samples'], 
-                                                crop_hf_samples=JSON['hf_crop_samples'], 
                                                 is_scale_data_for_disp=JSON['is_scale_data_for_display'] )
         
     # -----------------------------------------------------------------------------------------------------
-    # TODO: check if this is necessary 
     def _run_reconstruction_no_log_scale_from_json(self, buffer: np.ndarray, json_config_file_path: str) -> np.ndarray :
         """same functionality as _run_reconstruction(), only that no steps after cropping abs of FFTed signal -> no log10 scaling
         only that the reconstruction-parameters are parsed from JSON-congig-file 
@@ -150,8 +142,8 @@ class OctReconstructionManager(IO.OctDataFileManager) :
                                               key=JSON['windowing_key'], 
                                               is_sub_bg=JSON['is_substract_background'])
         post_ = self.perform_fft( pre_ )
-        post_ = self.return_abs_val_in_log_scale( post_ ) # already cropped compl.-conj.
-        return self.perform_aScan_cropping( post_, lf_smpls_crop=JSON['dc_crop_samples'], hf_smpls_crop=JSON['hf_crop_samples'] )
+        return self.return_abs_val_in_log_scale( post_ ) # already cropped compl.-conj.
+        
 
     ##########################################
     # ***** low-level processing methods *****
@@ -311,7 +303,7 @@ class OctReconstructionManager(IO.OctDataFileManager) :
     
     def return_scaled(self, buffer: np.ndarray, black_lvl: int=77, disp_scale: int=66) -> np.ndarray :
         """ returns scaled version of OCT data buffer """
-        buffer = np.asarray( 255 * ( (buffer - black_lvl) / disp_scale ) )
+        buffer = np.asarray( 255 * ( (buffer - black_lvl) / disp_scale ), dtype=self.dtype_recon )
         buffer[buffer < 0] = 0
         return np.asarray(buffer , dtype=self.dtype_recon )
     
@@ -366,49 +358,33 @@ class OctReconstructionManager(IO.OctDataFileManager) :
 
     def process_large_volumes(self, raw_dims: tuple, json_file_name: str,  full_file_path_raw: str, 
                               bScan_start_idx: int=0, full_file_path_recon: str=None, is_save_volume_2disk: bool=False) -> np.ndarray:
-        """Asserting an OCT C-Scan saved as one big-ass *.BIN-file, 
-        this function reconstructs the entire volume, buffer by buffer along the c-axis
-
-        Args:
-            raw_dims (np.ndarray): expexcted dimensions from OCt data in raw file 
-            json_file_name (str): json-file with all params for reconstruction
-            full_file_path_raw (str): path to raw-/*.BIN-file
-            bScan_start_idx (int, optional): start index (in case the volume is shifted). Defaults to 0.
-            full_file_path_recon (str, optional): path to where the should be saved 
-            - if safe flag is True -> appends '_recon' to file name and saves it as this. Defaults to None.
-            is_save_vol_2disk (bool, optional): flag to chose wether or not volume should be saved to disk. Defaults to False.
-
-        Returns:
-            np.ndarray: reconstructed OCT-volume
-        """
         # Pre-allocations and sanity checks for function params
         assert len(raw_dims) == 3, "Expecting a large (3D) volume when invoking this function"
-        JSON = ConfigDataManager(filename=json_file_name).load_json_file()
-        aLen_raw, bLen, cLen = raw_dims
-        if JSON["zeros_to_pad"] == 0 :
-            aLen_rec = aLen_raw - JSON["dc_crop_samples"] - JSON["hf_crop_samples"]
-        elif JSON["zeros_to_pad"] == 1 :
-            aLen_rec = (aLen_raw + OctReconstructionManager.diff_to_next_power_of_2(aLen_raw))//2 - JSON["dc_crop_samples"] - JSON["hf_crop_samples"]
-        else :
-            raise ValueError("unrecognized vlaue for zeros_to_pad - so far only 0 and 1 are implemted") #TODO: add arbitrary num of 0 
-        raw_full_file_size_bytes = os.path.getsize(full_file_path_raw)
-        raw_bScan_file_size = aLen_raw * bLen
+        JSON = ConfigDataManager(filename=json_file_name).load_json_file() # file rwith reconstruction hyperparameters
+        aLen_raw, bLen, cLen = raw_dims # input dimensions
+        aLen_recon = aLen_raw - JSON["dc_crop_samples"] - JSON["hf_crop_samples"] # output A-Scan length
+        raw_full_file_size_bytes = os.path.getsize(full_file_path_raw) # file size for sanity checks
+        raw_bScan_file_size = aLen_raw * bLen # B-scan size in voxels
         assert raw_full_file_size_bytes % (raw_bScan_file_size * 2 * cLen) == 0, f"Dims ({aLen_raw}, {bLen}, {cLen}): Either the dimensions or the data type are mismatched"
-        if full_file_path_recon is None:
-            full_file_path_recon = full_file_path_raw.split('.bin')[0] + '_recon.bin'
-        out_vol = np.zeros((aLen_rec, bLen, cLen))
+        if (full_file_path_recon is None) and (is_save_volume_2disk): # create default file for saving reconstructed volume in case none was created
+             file_name_saving = os.path.basename(full_file_path_raw).split('_')[0] + "_" + str(aLen_recon) + "x" + str(bLen) + "x" + str(cLen) + '_recon.bin'
+             full_file_path_recon = os.path.join(os.path.dirname(full_file_path_raw), file_name_saving) # final file path for saving
+        out_vol = np.zeros((aLen_recon, bLen, cLen)) # allocate memory for output volume buffer
+        # MAIN PROCESSING LOOP
         # loop though volume and reconstruct (optional: and safe) BUFFER-WISE
-        for c in tqdm(range(cLen)):
-            with open(full_file_path_raw, 'rb') as f_raw:
-                offset = ((c + bScan_start_idx) % cLen) * raw_bScan_file_size * np.dtype(self.dtype_loading).itemsize # offset in bytes
-                raw_buffer = np.fromfile(f_raw, dtype=self.dtype_raw, count=raw_bScan_file_size, offset=offset) # load buffer
-                raw_buffer = np.reshape(raw_buffer, (bLen, aLen_raw)) # reshape to size A * B
+        for c in tqdm(range(cLen)): # loop through "slow-scanning axis"
+            with open(full_file_path_raw, 'rb') as f_raw: # open binary in read mode
+                offset = ((c + bScan_start_idx) % cLen) * raw_bScan_file_size * np.dtype(self.dtype_loading).itemsize # pointer-offset in bytes
+                raw_buffer = np.fromfile(f_raw, dtype=self.dtype_raw, count=raw_bScan_file_size, offset=offset) # load buffer of expected B-Scan size and with offset
+                raw_buffer = np.reshape(raw_buffer, (bLen, aLen_raw)) # reshape to size len(A-Scan) * len(B-Scan)
                 raw_buffer = raw_buffer.swapaxes(0,1) # swap axis (A is 0th axis, by convention)
                 recon_buffer = self._run_reconstruction_from_json(buffer=raw_buffer,
-                                                                  json_config_file_path=json_file_name) # reconstruct
+                                                                  json_config_file_path=json_file_name) # reconstruct current buffer
+                recon_buffer = recon_buffer[JSON["dc_crop_samples"]:JSON["hf_crop_samples"], :]
                 if is_save_volume_2disk: # save-/append reconstructed buffer, if flag is True
                     with open(full_file_path_recon, 'a+b') as f: # Save to file in binary append mode
-                        recon_buffer.astype(self.dtype_recon).tofile(f)
+                         # create "cropped" buffer
+                        recon_buffer.astype(self.dtype_recon).tofile(f) # save cropped buffer in cropped version
                 out_vol[:, :, c] = recon_buffer # write current buffer in out volume buffer 
         return np.asarray(out_vol, dtype=self.dtype_recon)
     
@@ -417,8 +393,8 @@ class OctReconstructionManager(IO.OctDataFileManager) :
 if __name__ == '__main__' :
     print("[INFO:] Running from < octreconstructionmanager.py > ...")
 
-    # path = r"/home/zeiss/Data_Tachyoptes/rasterVol04_13312x512x512.bin"
-    # recon = OctReconstructionManager().process_large_volumes((13312,512,512), 'DefaultReconParams', path, is_save_volume_2disk=True)
+    path = r"C:\Users\PhilippsLabLaptop\Desktop\Graft1_13312x512x512.bin"
+    recon = OctReconstructionManager().process_large_volumes((13312,512,512), 'CropLargeVolumes', path, is_save_volume_2disk=True)
     
     # plt.imshow(np.mean(recon, axis=0), cmap='gray')
     # plt.show()

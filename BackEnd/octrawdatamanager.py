@@ -1,6 +1,6 @@
 """
                                         ******
-        Author: @Philipp Matten - philipp.matten@meduniwien.ac.at / philipp.matten@gmx.de
+        Author: @Philipp Matten - philipp.matten@meduniwien.ac.at / philipp.matten@gmail.de
                 
                                     Copyright 2021 
                                         ******
