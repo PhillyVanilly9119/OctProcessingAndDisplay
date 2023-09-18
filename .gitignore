@@ -44,6 +44,7 @@
 **/Backend/__Pycache__/
 **/Frontend/__Pycache__/
 **/Config/
+**/Scripts/
 
 # Data Files
 *.xls
