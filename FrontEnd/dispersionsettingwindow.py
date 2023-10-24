@@ -358,14 +358,15 @@ class UiWindowDialog(object):
             return
         print("Reconstructing...")
         # create/update current b-Scan
+        # TODO Fix Bug from recon JSON File
         recon_buffer = self.REC._run_reconstruction(self.data, disp_coeffs=self.disp_coeffs_tuple,
-                                                      wind_key=self.JSON['windowing_key'], 
-                                                      samples_hf_crop=self.JSON['hf_crop_samples'], 
-                                                      samples_dc_crop=self.JSON['dc_crop_samples'], 
-                                                      scale_fac=self.JSON['disp_scale_factor'], 
-                                                      blck_lvl=self.JSON['black_lvl_for_dis'],
-                                                      is_bg_sub=self.JSON['is_substract_background'],
-                                                      show_scaled_data=self.JSON['is_scale_data_for_display'])
+                                                      wind_key="Hann", 
+                                                      samples_hf_crop=0, 
+                                                      samples_dc_crop=100, 
+                                                      scale_fac=64, 
+                                                      blck_lvl=90,
+                                                      is_bg_sub=True,
+                                                      show_scaled_data=True)
         recon_buffer = cv2.cvtColor( recon_buffer, cv2.COLOR_BAYER_GR2GRAY )
         display_buffer = QtGui.QImage(recon_buffer.data.tobytes(), 
                                      recon_buffer.shape[1], recon_buffer.shape[0], 
