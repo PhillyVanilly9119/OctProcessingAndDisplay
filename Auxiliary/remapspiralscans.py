@@ -8,7 +8,7 @@ from scipy import signal
 from natsort import natsorted
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.abspath(r"C:\Users\phili\Documents\Coding\Repositories\OctProcessingAndDisplay\BackEnd"))
+sys.path.append(os.path.abspath(r"C:\Users\PhilippsLabLaptop\Documents\Programming\Repositories\OctProcessingAndDisplay\BackEnd"))
 
 from octreconstructionmanager import OctReconstructionManager as REC
 from octdatafilemanager import __return_volume_dims_string
@@ -31,13 +31,22 @@ def reconstruct_and_remap_volume(file_path: str, in_vol_shape: tuple, split_fac:
     buffer = buffer * window[np.newaxis, np.newaxis, :] # spectral shaping 
     buffer = buffer.swapaxes(0,-1)
     buffer = ReconManager.perform_fft(buffer, l_pad=704)
-    buffer = ReconManager.perform_post_fft_functions(buffer, 64, 85, 10, 0, True)
+    # buffer = 63.75 * (buffer-85)
     buffer = buffer.swapaxes(1,2)
-    buffer = buffer.reshape(694, buffer.size//694)
-    remapped_vol = np.zeros((694, table_size+1, table_size+1))
+    crop = 10
+    black_lvl = 85
+    a_len_new = (in_vol_shape[0]//2)-crop
+    buffer = buffer[crop:in_vol_shape[0]//2,...] # crop 1st Fourier-plane of buffer
+    buffer = 20 * np.log10(np.abs(buffer))
+    buffer = buffer - black_lvl
+    buffer[buffer < 0] = 0
+    buffer *= 63.75 / 20
+    buffer = np.asarray(buffer, dtype=np.uint8) 
+    buffer = buffer.reshape(a_len_new, buffer.size//a_len_new)
+    remapped_vol = np.zeros((a_len_new, table_size+1, table_size+1))
     print("Remapping...")
     if is_debug:
-        for j in range(4800, 4900, 10): # debug
+        for j in range(4000, 5000, 100): # debug
             offset = j
             for pos in range(buffer.shape[1]):
                 for i in range(3):
@@ -64,7 +73,7 @@ def reconstruct_and_remap_volume(file_path: str, in_vol_shape: tuple, split_fac:
 if __name__ == '__main__':
     
     ### Ramapping Table 
-    path_remapping_file = r"C:\Users\phili\Downloads\04_Spiral_600_2_10.bin"
+    path_remapping_file = r"C:\Users\PhilippsLabLaptop\Desktop\04_Spiral_600_2_10.bin"
     with open(path_remapping_file, 'r') as f:    
         table = np.fromfile(f, dtype=np.uint32)
     table = table.reshape(6, table.size//6) # check if reshaping and loading make sense  
@@ -72,19 +81,19 @@ if __name__ == '__main__':
     table_size = np.max(table) 
     
     ### Dispersion Correction
-    filepath_disp_vec = r"C:\Users\phili\Desktop\PhillyScripts\Dispersion_704_1_2_600kHz.bin"
+    filepath_disp_vec = r"C:\Users\PhilippsLabLaptop\Desktop\Dispersion_704_1_2_600kHz.bin"
     with open(filepath_disp_vec, 'r') as f_disp:
         disp_vec = np.fromfile(f_disp, dtype=np.complex64)
         disp_vec = disp_vec.reshape(1, 1408)
 
     ### Folders with raw OCT volume data
     all_glob_files = [
-        r"E:\VolumeRegistration\Eye2_M5_RawVols",
-        r"E:\VolumeRegistration\Eye1_M1_RawVols",
-        r"E:\VolumeRegistration\Eye1_M2_RawVols",
-        r"E:\VolumeRegistration\Eye1_M3_RawVols",
-        r"E:\VolumeRegistration\Eye1_M4_RawVols",
-        r"E:\VolumeRegistration\Eye1_M5_RawVols"
+        r"D:\VolumeRegistration\Eye1_M5_RawVols",
+        r"D:\VolumeRegistration\Eye2_M1_RawVols",
+        r"D:\VolumeRegistration\Eye2_M2_RawVols",
+        r"D:\VolumeRegistration\Eye2_M3_RawVols",
+        r"D:\VolumeRegistration\Eye2_M4_RawVols",
+        r"D:\VolumeRegistration\Eye2_M5_RawVols"
         ]
 
     ### Files with raw OCT volume data
@@ -94,14 +103,14 @@ if __name__ == '__main__':
         raster_vol_list = [file for file in all_files if "rasterVol" in file]
         raster_vol_list = natsorted(raster_vol_list)         
 
-    ### main processing loop
-    for vol_file in tqdm(raster_vol_list):
-        remapped, filtered = reconstruct_and_remap_volume(file_path=vol_file, in_vol_shape=(1408, 2352, 25), split_fac=2, offset=4845, is_debug=False) 
-        post_fix_unfiltered = __return_volume_dims_string(remapped.shape)
-        post_fix_filtered =  __return_volume_dims_string(filtered.shape)
-        file_path_saving_unfiltered = os.path.join(os.path.dirname(vol_file), os.path.basename(vol_file).split('_')[0] + '_remapped' + post_fix_unfiltered + ".bin")
-        file_path_saving_filtered = os.path.join(os.path.dirname(vol_file), os.path.basename(vol_file).split('_')[0] + "_remapped_filtered" + post_fix_filtered + ".bin")
-        print(file_path_saving_filtered)
-        print(file_path_saving_unfiltered)
-        remapped.astype(np.uint8).tofile(file_path_saving_unfiltered)
-        filtered.astype(np.uint8).tofile(file_path_saving_filtered)
+        ### main processing loop
+        for vol_file in tqdm(raster_vol_list):
+            remapped, filtered = reconstruct_and_remap_volume(file_path=vol_file, in_vol_shape=(1408, 2352, 25), split_fac=2, offset=4800, is_debug=True) 
+            post_fix_unfiltered = __return_volume_dims_string(remapped.shape)
+            post_fix_filtered =  __return_volume_dims_string(filtered.shape)
+            file_path_saving_unfiltered = os.path.join(os.path.dirname(vol_file), os.path.basename(vol_file).split('_')[0] + '_remapped' + post_fix_unfiltered + ".bin")
+            file_path_saving_filtered = os.path.join(os.path.dirname(vol_file), os.path.basename(vol_file).split('_')[0] + "_remapped_filtered" + post_fix_filtered + ".bin")
+            print(file_path_saving_filtered)
+            print(file_path_saving_unfiltered)
+            remapped.astype(np.uint8).tofile(file_path_saving_unfiltered)
+            filtered.astype(np.uint8).tofile(file_path_saving_filtered)

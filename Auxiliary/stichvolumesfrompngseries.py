@@ -52,7 +52,7 @@ def run():
     # path_saving = [path + "_binaries" for path in path_loading]
     
     path_loading = [
-        r"C:\Users\phili\Desktop\PhillyScripts\20230411_135910_Slammer1"
+        r"D:\VolumeRegistration\20231016_134857"
         ]
     
     path_saving = [i + '_binaries' for i in path_loading]
