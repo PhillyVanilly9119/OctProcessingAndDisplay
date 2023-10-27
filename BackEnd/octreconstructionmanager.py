@@ -369,7 +369,6 @@ class OctReconstructionManager(IO.OctDataFileManager) :
         if (full_file_path_recon is None) and (is_save_volume_2disk): # create default file for saving reconstructed volume in case none was created
              file_name_saving = os.path.basename(full_file_path_raw).split('_')[0] + "_" + str(aLen_recon) + "x" + str(bLen) + "x" + str(cLen) + '_recon.bin'
              full_file_path_recon = os.path.join(os.path.dirname(full_file_path_raw), file_name_saving) # final file path for saving
-        out_vol = np.zeros((aLen_recon, bLen, cLen)) # allocate memory for output volume buffer
         # MAIN PROCESSING LOOP
         # loop though volume and reconstruct (optional: and safe) BUFFER-WISE
         for c in tqdm(range(cLen)): # loop through "slow-scanning axis"
@@ -380,21 +379,23 @@ class OctReconstructionManager(IO.OctDataFileManager) :
                 raw_buffer = raw_buffer.swapaxes(0,1) # swap axis (A is 0th axis, by convention)
                 recon_buffer = self._run_reconstruction_from_json(buffer=raw_buffer,
                                                                   json_config_file_path=json_file_name) # reconstruct current buffer
-                recon_buffer = recon_buffer[JSON["dc_crop_samples"]:JSON["hf_crop_samples"], :]
-                if is_save_volume_2disk: # save-/append reconstructed buffer, if flag is True
-                    with open(full_file_path_recon, 'a+b') as f: # Save to file in binary append mode
-                         # create "cropped" buffer
-                        recon_buffer.astype(self.dtype_recon).tofile(f) # save cropped buffer in cropped version
-                out_vol[:, :, c] = recon_buffer # write current buffer in out volume buffer 
-        return np.asarray(out_vol, dtype=self.dtype_recon)
+                recon_buffer = recon_buffer[JSON["dc_crop_samples"]:recon_buffer.shape[0]-JSON["hf_crop_samples"], :]
+                recon_buffer = signal.medfilt2d(recon_buffer, kernel_size=(3,3))
+                with open(full_file_path_recon, 'a+b') as f: # Save to file in binary append mode
+                    recon_buffer.astype(self.dtype_recon).tofile(f) # save cropped buffer in cropped version
+
     
 
 # for testing and debugging purposes
 if __name__ == '__main__' :
     print("[INFO:] Running from < octreconstructionmanager.py > ...")
 
-    path = r"C:\Users\PhilippsLabLaptop\Desktop\Graft1_13312x512x512.bin"
-    recon = OctReconstructionManager().process_large_volumes((13312,512,512), 'CropLargeVolumes', path, is_save_volume_2disk=True)
+    path = [
+        r"C:\Users\PhilippsLabLaptop\Downloads\PigEye1_rasterVol02_6656x700x700.bin",
+        r"C:\Users\PhilippsLabLaptop\Downloads\PigEye2_rasterVol01_6656x700x700.bin"
+        ]
+            
+    for p in path:
+        OctReconstructionManager().process_large_volumes((6656,700,700), 'CropLargeVolumes', p, is_save_volume_2disk=True)
     
-    # plt.imshow(np.mean(recon, axis=0), cmap='gray')
-    # plt.show()
+    
