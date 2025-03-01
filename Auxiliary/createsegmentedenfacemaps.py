@@ -51,23 +51,15 @@ def generate_enface_via_gradient_first_two_idxs(vol: np.array, kernelsize: tuple
 def run():
 
     listings = [
-        r"D:\VolumeRegistration\Eye1_M2_RawVols",
-        r"D:\VolumeRegistration\Eye1_M3_RawVols",
-        r"D:\VolumeRegistration\Eye1_M4_RawVols",
-        r"D:\VolumeRegistration\Eye1_M5_RawVols",
-        r"D:\VolumeRegistration\Eye2_M1_RawVols",
-        r"D:\VolumeRegistration\Eye2_M2_RawVols",
-        r"D:\VolumeRegistration\Eye2_M3_RawVols",
-        r"D:\VolumeRegistration\Eye2_M4_RawVols",
-        r"D:\VolumeRegistration\Eye2_M5_RawVols"
-    ]
+        r"C:\Users\phili\Downloads\20240111_162642_binaries"
+        ]
 
     for p_file in listings:
         glob_path = p_file #r"C:\Users\phili\Desktop\PhillyScripts\20230411_135910_Slammer1_binaries"
         file_paths = glob.glob(glob_path + "/*.bin")
         file_paths = [file for file in file_paths if "OctVolume" in file] 
         # print(file_paths) # debug
-        dims=(694, 391, 391)
+        dims=(644, 391, 391)
 
         volidx = []
         for i, file in tqdm(enumerate(file_paths)):

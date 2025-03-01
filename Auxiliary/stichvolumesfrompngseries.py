@@ -16,7 +16,7 @@ def generate_volumes(path_loading: str, path_saving: str):
     if not os.path.exists(path_saving):
         os.makedirs(path_saving)
     # get list of files in dir
-    full_file_list = glob.glob(path_loading + "/*.png")
+    full_file_list = glob.glob(f"{path_loading}/*.png")
     # sort list after image numbers (natural sort)
     sorted_full_file_list = natsorted(full_file_list, key=lambda y: y.lower())
     # get dims of volumes by loading first image
@@ -32,11 +32,9 @@ def generate_volumes(path_loading: str, path_saving: str):
             continue
         im = np.swapaxes(np.asarray(imageio.imread(val), dtype=np.uint8), 0, 1) # load image
         vol_buffer[:,:,c_idx] = im # write current B-scan in volume
-        if c_idx == dims[-1] - 1: # enters, every time one entire volume full
-            # save volume as binary
-            # print(f"\n[INFO:] Saving volume No.{vol_counter}\n") #debug
+        if c_idx == dims[-1] - 1:
             vol_time_stamp = os.path.basename(path_saving)
-            file_name = "OctVolume_" + str(vol_counter) + "_" + vol_time_stamp + "_" + str(dims[0]) + "x" + str(dims[1]) + "x" + str(dims[-1]) + ".bin"
+            file_name = f"OctVolume_{str(vol_counter)}_{vol_time_stamp}_{str(dims[0])}x{str(dims[1])}x{str(dims[-1])}.bin"
             vol_buffer.tofile(os.path.join(path_saving, file_name))
             # save en face image as png
             enface = np.mean(vol_buffer, axis=0)
@@ -52,14 +50,14 @@ def run():
     # path_saving = [path + "_binaries" for path in path_loading]
     
     path_loading = [
-        r"D:\VolumeRegistration\20231016_134857"
+        r"C:\Users\phili\Downloads\20240111_162642"
         ]
     
-    path_saving = [i + '_binaries' for i in path_loading]
+    path_saving = [f'{i}_binaries' for i in path_loading]
     
     for i, _ in enumerate(path_loading):
         generate_volumes(path_loading[i], path_saving[i])
 
 
-if "__main__" == __name__:
+if __name__ == "__main__":
     run()

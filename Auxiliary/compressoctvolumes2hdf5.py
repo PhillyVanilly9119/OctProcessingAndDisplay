@@ -11,11 +11,12 @@ from tqdm import tqdm
 from scipy import signal 
 from natsort import natsorted
 import matplotlib.pyplot as plt
+from scipy.ndimage import median_filter
 
 
 def compress_and_save_to_hdf5(volume, file_path_saving):
     # Create an HDF5 file for writing
-    file_path_hdf5_saving = file_path_saving[:-4] + ".hdf5"
+    file_path_hdf5_saving = f"{file_path_saving[:-4]}.hdf5"
     with h5py.File(file_path_hdf5_saving, 'w') as hf:
         # Create dataset name
         dataset_name = "oct_volume_" + os.path.basename(file_path_saving).split("_")[1]
@@ -47,24 +48,17 @@ def stack_n_numpy_arrays(file_list: str, dims: tuple):
 def run():
     
     main_file_dir = [
-        r"D:\VolumeRegistration\Eye1_M3_RawVols",
-        r"D:\VolumeRegistration\Eye1_M4_RawVols",
-        r"D:\VolumeRegistration\Eye1_M5_RawVols",
-        r"D:\VolumeRegistration\Eye2_M1_RawVols",
-        r"D:\VolumeRegistration\Eye2_M2_RawVols",
-        r"D:\VolumeRegistration\Eye2_M3_RawVols",
-        r"D:\VolumeRegistration\Eye2_M4_RawVols",
-        r"D:\VolumeRegistration\Eye2_M5_RawVols"
-    ]
+        r"C:\Users\phili\Downloads\20240111_162642_binaries"
+        ]
     
     # create list of all *.bin volumes that are to be compressed and replaced
     for b_file in main_file_dir:
-        files = glob.glob(b_file + "/*.bin")
+        files = glob.glob(f"{b_file}/*.bin")
         files = natsorted(files)
         for file in tqdm(files):
-            volume = load_entire_volume_from_binary(file, (694,391,391))
+            volume = load_entire_volume_from_binary(file, (644,391,391))
+            volume = median_filter(volume, (3,3,3))
             compress_and_save_to_hdf5(volume, file)
-
 
 if __name__ == "__main__":
     run()

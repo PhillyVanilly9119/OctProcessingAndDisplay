@@ -8,7 +8,7 @@ from scipy import signal
 from natsort import natsorted
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.abspath(r"C:\Users\PhilippsLabLaptop\Documents\Programming\Repositories\OctProcessingAndDisplay\BackEnd"))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'BackEnd')))
 
 from octreconstructionmanager import OctReconstructionManager as REC
 from octdatafilemanager import __return_volume_dims_string
@@ -46,7 +46,7 @@ def reconstruct_and_remap_volume(file_path: str, in_vol_shape: tuple, split_fac:
     remapped_vol = np.zeros((a_len_new, table_size+1, table_size+1))
     print("Remapping...")
     if is_debug:
-        for j in range(4000, 5000, 100): # debug
+        for j in range(4800, 4900, 5): # debug
             offset = j
             for pos in range(buffer.shape[1]):
                 for i in range(3):
@@ -73,7 +73,7 @@ def reconstruct_and_remap_volume(file_path: str, in_vol_shape: tuple, split_fac:
 if __name__ == '__main__':
     
     ### Ramapping Table 
-    path_remapping_file = r"C:\Users\PhilippsLabLaptop\Desktop\04_Spiral_600_2_10.bin"
+    path_remapping_file = r"C:\Users\phili\Documents\Coding\Repositories\OctProcessingAndDisplay\Config\04_Spiral_600_2_10.bin" # TODO: make relative path
     with open(path_remapping_file, 'r') as f:    
         table = np.fromfile(f, dtype=np.uint32)
     table = table.reshape(6, table.size//6) # check if reshaping and loading make sense  
@@ -81,31 +81,30 @@ if __name__ == '__main__':
     table_size = np.max(table) 
     
     ### Dispersion Correction
-    filepath_disp_vec = r"C:\Users\PhilippsLabLaptop\Desktop\Dispersion_704_1_2_600kHz.bin"
+    filepath_disp_vec = r"C:\Users\phili\Documents\Coding\Repositories\OctProcessingAndDisplay\Config\Dispersion_704_1_2_600kHz.bin" # TODO: make relative path
     with open(filepath_disp_vec, 'r') as f_disp:
         disp_vec = np.fromfile(f_disp, dtype=np.complex64)
         disp_vec = disp_vec.reshape(1, 1408)
 
     ### Folders with raw OCT volume data
     all_glob_files = [
-        r"D:\VolumeRegistration\Eye1_M5_RawVols",
-        r"D:\VolumeRegistration\Eye2_M1_RawVols",
-        r"D:\VolumeRegistration\Eye2_M2_RawVols",
-        r"D:\VolumeRegistration\Eye2_M3_RawVols",
-        r"D:\VolumeRegistration\Eye2_M4_RawVols",
-        r"D:\VolumeRegistration\Eye2_M5_RawVols"
+        r"E:\VolumeRegistration\Eye2_M1_RawVols",
+        r"E:\VolumeRegistration\Eye2_M2_RawVols",
+        r"E:\VolumeRegistration\Eye2_M3_RawVols",
+        r"E:\VolumeRegistration\Eye2_M4_RawVols",
+        r"E:\VolumeRegistration\Eye2_M5_RawVols"
         ]
 
     ### Files with raw OCT volume data
     for folder in all_glob_files:
-        path_to_binaries = folder
-        all_files = glob.glob(path_to_binaries + "/*.bin")
+        all_files = glob.glob(folder + "/*.bin")
+        print(folder, all_files)
         raster_vol_list = [file for file in all_files if "rasterVol" in file]
         raster_vol_list = natsorted(raster_vol_list)         
 
         ### main processing loop
         for vol_file in tqdm(raster_vol_list):
-            remapped, filtered = reconstruct_and_remap_volume(file_path=vol_file, in_vol_shape=(1408, 2352, 25), split_fac=2, offset=4800, is_debug=True) 
+            remapped, filtered = reconstruct_and_remap_volume(file_path=vol_file, in_vol_shape=(1408, 2352, 25), split_fac=2, offset=4845, is_debug=False) 
             post_fix_unfiltered = __return_volume_dims_string(remapped.shape)
             post_fix_filtered =  __return_volume_dims_string(filtered.shape)
             file_path_saving_unfiltered = os.path.join(os.path.dirname(vol_file), os.path.basename(vol_file).split('_')[0] + '_remapped' + post_fix_unfiltered + ".bin")
